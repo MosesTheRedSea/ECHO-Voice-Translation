@@ -42,6 +42,10 @@
             border-radius: 5px;
             margin: 20px 0;
             padding: 15px;
+            display: none; /* Hide all sections by default */
+        }
+        section.active {
+            display: block; /* Show only the active section */
         }
         h2 {
             color: #35424a;
@@ -72,7 +76,7 @@
         <a href="#" onclick="showContent('final')">Final Report</a>
     </div>
 
-    <section id="proposal" class="content active">
+    <section id="proposal" class="content">
         <h2>Proposal</h2>
         <p>
             <strong>Introduction/Background:</strong> Provide an introduction of your topic and literature review of related work. Briefly explain your dataset and its features, and provide a link to the dataset if possible.<br>
@@ -128,12 +132,17 @@
             // Hide all content sections
             var contents = document.getElementsByClassName('content');
             for (var i = 0; i < contents.length; i++) {
-                contents[i].classList.remove('active');
+                contents[i].style.display = 'none'; // Hide all sections
             }
 
             // Show the selected content section
-            document.getElementById(section).classList.add('active');
+            document.getElementById(section).style.display = 'block'; // Show the selected section
         }
+
+        // Show the proposal section by default when the page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            showContent('proposal');
+        });
     </script>
 
 </body>
