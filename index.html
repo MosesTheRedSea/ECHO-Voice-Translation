@@ -3,128 +3,83 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Voice-Based Text Language Translation System</title>
-    <link rel="stylesheet" href="styles.css"> <!-- Link to your CSS file, if any -->
+    <title>Project Reports</title>
     <style>
         body {
             font-family: Arial, sans-serif;
             margin: 0;
-            padding: 20px;
-            background-color: #f4f4f4;
-        }
-        header {
-            background: #35424a;
-            color: #ffffff;
-            padding: 10px 0;
+            padding: 0;
             text-align: center;
         }
-        .tab {
+
+        /* Navigation bar styling */
+        .navbar {
+            background-color: #333;
+            overflow: hidden;
             display: flex;
-            cursor: pointer;
-            padding: 10px;
-            background-color: #ffffff;
-            border: 1px solid #dddddd;
-            border-radius: 5px;
-            margin: 20px 0;
-            justify-content: center;
+            justify-content: center; /* Center the navigation items */
         }
-        .tab:hover {
-            background-color: #eaeaea;
-        }
-        .tab-content {
-            display: none;
-            background: #ffffff;
-            border: 1px solid #dddddd;
-            border-radius: 5px;
-            padding: 15px;
-            margin-top: -1px; /* To prevent double borders */
-        }
-        .active {
+
+        .navbar a {
+            float: none; /* Disable float to keep items centered */
             display: block;
+            color: white;
+            text-align: center;
+            padding: 14px 16px;
+            text-decoration: none;
         }
-        h2 {
-            color: #35424a;
+
+        .navbar a:hover {
+            background-color: #ddd;
+            color: black;
+        }
+
+        /* Content area styling */
+        .content {
+            padding: 20px;
+            display: none; /* Hide content initially */
+        }
+
+        .active {
+            display: block; /* Show active content */
         }
     </style>
 </head>
 <body>
-    <header>
-        <h1>Voice-Based Text Language Translation System</h1>
-    </header>
-    
-    <div class="tabs">
-        <div class="tab" onclick="showTab('proposal')">Proposal</div>
-        <div class="tab" onclick="showTab('midterm-checkpoint')">Midterm Checkpoint</div>
-        <div class="tab" onclick="showTab('final-report')">Final Report</div>
+
+    <div class="navbar">
+        <a href="#" onclick="showContent('proposal')">Proposal</a>
+        <a href="#" onclick="showContent('midterm')">Midterm Checkpoint</a>
+        <a href="#" onclick="showContent('final')">Final Report</a>
     </div>
 
-    <div id="proposal" class="tab-content active">
+    <div id="proposal" class="content active">
         <h2>Proposal</h2>
-        <p>
-            <strong>Introduction/Background:</strong> Provide an introduction of your topic and literature review of related work. Briefly explain your dataset and its features, and provide a link to the dataset if possible.<br>
-            ✅Literature Review<br>
-            ✅Dataset Description<br>
-            ✅Dataset Link (if applicable)<br>
-        </p>
-        <p>
-            <strong>Problem Definition:</strong> Identify a problem and motivate the need for a solution.<br>
-            ✅Problem<br>
-            ✅Motivation<br>
-        </p>
-        <p>
-            <strong>Methods:</strong> Present proposed solutions including specific data processing methods and machine learning algorithms, and elaborate on why you think each will be effective. It is recommended to identify specific functions/classes in existing packages and libraries (i.e., scikit-learn) rather than coding the algorithms from scratch.<br>
-            ✅3+ Data Preprocessing Methods Identified<br>
-            ✅3+ ML Algorithms/Models Identified<br>
-            ✅CS 7641: Unsupervised and Supervised Learning Methods Identified<br>
-            ✅CS 4641: Supervised or Unsupervised Learning Methods Identified (Supervised is recommended in general)<br>
-        </p>
-        <p>
-            <strong>(Potential) Results and Discussion:</strong> Identify several quantitative metrics you plan to use for the project (i.e., ML Metrics). Present goals in terms of these metrics, and state any expected results.<br>
-            ✅3+ Quantitative Metrics<br>
-            ✅Project Goals (recommended to include sustainability and ethical considerations)<br>
-            ✅Expected Results<br>
-        </p>
-        <p>
-            <strong>References:</strong> Cite relevant papers and articles utilizing the IEEE format. All references in this section must have a matching in-text citation in the body of your proposal text.<br>
-            ✅3+ References (preferably peer reviewed)<br>
-            ✅1+ In-Text Citation Per Reference<br>
-        </p>
+        <p>Your proposal content goes here...</p>
     </div>
 
-    <div id="midterm-checkpoint" class="tab-content">
+    <div id="midterm" class="content">
         <h2>Midterm Checkpoint</h2>
-        <p>
-            This section will contain your midterm checkpoint details, including any updates on your progress, challenges faced, and changes to the proposal as necessary.
-        </p>
+        <p>Your midterm checkpoint content goes here...</p>
     </div>
 
-    <div id="final-report" class="tab-content">
+    <div id="final" class="content">
         <h2>Final Report</h2>
-        <p>
-            This section will include your final report, summarizing the work completed, results obtained, and conclusions drawn from the project.
-        </p>
+        <p>Your final report content goes here...</p>
     </div>
-
-    <footer>
-        <p>&copy; 2024 MosesTheRedSea. All rights reserved.</p>
-    </footer>
 
     <script>
-        function showTab(tabName) {
-            // Hide all tab contents
-            const tabs = document.querySelectorAll('.tab-content');
-            tabs.forEach(tab => tab.classList.remove('active'));
+        function showContent(section) {
+            // Hide all content sections
+            var contents = document.getElementsByClassName('content');
+            for (var i = 0; i < contents.length; i++) {
+                contents[i].classList.remove('active');
+            }
 
-            // Remove active class from all tabs
-            const tabElements = document.querySelectorAll('.tab');
-            tabElements.forEach(tabElement => tabElement.classList.remove('active'));
-
-            // Show the selected tab content
-            document.getElementById(tabName).classList.add('active');
-
-            // Add active class to the clicked tab
-            event.currentTarget.classList.add('active');
+            // Show the selected content section
+            document.getElementById(section).classList.add('active');
         }
     </script>
+
 </body>
 </html>
