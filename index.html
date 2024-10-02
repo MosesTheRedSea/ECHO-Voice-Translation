@@ -3,84 +3,128 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Voice-Based Text Language Translation System Proposal</title>
-    <link rel="stylesheet" href="style.css"> <!-- Link to your CSS file -->
+    <title>Voice-Based Text Language Translation System</title>
+    <link rel="stylesheet" href="styles.css"> <!-- Link to your CSS file, if any -->
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f4f4f4;
+        }
+        header {
+            background: #35424a;
+            color: #ffffff;
+            padding: 10px 0;
+            text-align: center;
+        }
+        .tab {
+            display: flex;
+            cursor: pointer;
+            padding: 10px;
+            background-color: #ffffff;
+            border: 1px solid #dddddd;
+            border-radius: 5px;
+            margin: 20px 0;
+            justify-content: center;
+        }
+        .tab:hover {
+            background-color: #eaeaea;
+        }
+        .tab-content {
+            display: none;
+            background: #ffffff;
+            border: 1px solid #dddddd;
+            border-radius: 5px;
+            padding: 15px;
+            margin-top: -1px; /* To prevent double borders */
+        }
+        .active {
+            display: block;
+        }
+        h2 {
+            color: #35424a;
+        }
+    </style>
 </head>
 <body>
     <header>
-        <h1>Voice-Based Text Language Translation System Proposal</h1>
+        <h1>Voice-Based Text Language Translation System</h1>
     </header>
+    
+    <div class="tabs">
+        <div class="tab" onclick="showTab('proposal')">Proposal</div>
+        <div class="tab" onclick="showTab('midterm-checkpoint')">Midterm Checkpoint</div>
+        <div class="tab" onclick="showTab('final-report')">Final Report</div>
+    </div>
 
-    <main>
-        <section id="introduction">
-            <h2>1. Introduction/Background</h2>
-            <p>Provide an introduction of your topic and literature review of related work. Briefly explain your dataset and its features, and provide a link to the dataset if possible.</p>
-            <ul>
-                <li>✅ Literature Review</li>
-                <li>✅ Dataset Description</li>
-                <li>✅ Dataset Link (if applicable)</li>
-            </ul>
-        </section>
+    <div id="proposal" class="tab-content active">
+        <h2>Proposal</h2>
+        <p>
+            <strong>Introduction/Background:</strong> Provide an introduction of your topic and literature review of related work. Briefly explain your dataset and its features, and provide a link to the dataset if possible.<br>
+            ✅Literature Review<br>
+            ✅Dataset Description<br>
+            ✅Dataset Link (if applicable)<br>
+        </p>
+        <p>
+            <strong>Problem Definition:</strong> Identify a problem and motivate the need for a solution.<br>
+            ✅Problem<br>
+            ✅Motivation<br>
+        </p>
+        <p>
+            <strong>Methods:</strong> Present proposed solutions including specific data processing methods and machine learning algorithms, and elaborate on why you think each will be effective. It is recommended to identify specific functions/classes in existing packages and libraries (i.e., scikit-learn) rather than coding the algorithms from scratch.<br>
+            ✅3+ Data Preprocessing Methods Identified<br>
+            ✅3+ ML Algorithms/Models Identified<br>
+            ✅CS 7641: Unsupervised and Supervised Learning Methods Identified<br>
+            ✅CS 4641: Supervised or Unsupervised Learning Methods Identified (Supervised is recommended in general)<br>
+        </p>
+        <p>
+            <strong>(Potential) Results and Discussion:</strong> Identify several quantitative metrics you plan to use for the project (i.e., ML Metrics). Present goals in terms of these metrics, and state any expected results.<br>
+            ✅3+ Quantitative Metrics<br>
+            ✅Project Goals (recommended to include sustainability and ethical considerations)<br>
+            ✅Expected Results<br>
+        </p>
+        <p>
+            <strong>References:</strong> Cite relevant papers and articles utilizing the IEEE format. All references in this section must have a matching in-text citation in the body of your proposal text.<br>
+            ✅3+ References (preferably peer reviewed)<br>
+            ✅1+ In-Text Citation Per Reference<br>
+        </p>
+    </div>
 
-        <section id="problem-definition">
-            <h2>2. Problem Definition</h2>
-            <p>Identify a problem and motivate the need for a solution.</p>
-            <ul>
-                <li>✅ Problem</li>
-                <li>✅ Motivation</li>
-            </ul>
-        </section>
+    <div id="midterm-checkpoint" class="tab-content">
+        <h2>Midterm Checkpoint</h2>
+        <p>
+            This section will contain your midterm checkpoint details, including any updates on your progress, challenges faced, and changes to the proposal as necessary.
+        </p>
+    </div>
 
-        <section id="methods">
-            <h2>3. Methods</h2>
-            <p>Present proposed solutions including specific data processing methods and machine learning algorithms, and elaborate on why you think each will be effective. It is recommended to identify specific functions/classes in existing packages and libraries (i.e., scikit-learn) rather than coding the algorithms from scratch.</p>
-            <ul>
-                <li>✅ 3+ Data Preprocessing Methods Identified</li>
-                <li>✅ 3+ ML Algorithms/Models Identified</li>
-                <li>✅ CS 7641: Unsupervised and Supervised Learning Methods Identified</li>
-                <li>✅ CS 4641: Supervised or Unsupervised Learning Methods Identified (Supervised is recommended in general)</li>
-            </ul>
-        </section>
-
-        <section id="results-discussion">
-            <h2>4. (Potential) Results and Discussion</h2>
-            <p>Identify several quantitative metrics you plan to use for the project (i.e., ML Metrics). Present goals in terms of these metrics, and state any expected results.</p>
-            <ul>
-                <li>✅ 3+ Quantitative Metrics</li>
-                <li>✅ Project Goals (recommended to include sustainability and ethical considerations)</li>
-                <li>✅ Expected Results</li>
-            </ul>
-        </section>
-
-        <section id="references">
-            <h2>5. References</h2>
-            <p>Cite relevant papers and articles utilizing the IEEE format. All references in this section must have a matching in-text citation in the body of your proposal text.</p>
-            <ul>
-                <li>✅ 3+ References (preferably peer reviewed)</li>
-                <li>✅ 1+ In-Text Citation Per Reference</li>
-            </ul>
-        </section>
-
-        <section id="submission-requirements">
-            <h2>Proposal Submission Requirements</h2>
-            <p>1. Report: The proposal report must be written on a website hosted with GitHub Pages or Streamlit. The report must be less than 600 words, and sections (1) through (4) from above count towards this word limit.</p>
-            <ul>
-                <li>✅ Gantt Chart: List each member’s planned responsibilities for the entirety of the project.</li>
-                <li>✅ Contribution Table: List all group members’ names and explicit contributions in preparing the proposal.</li>
-                <pre>
-                Name       Proposal Contributions
-                Member1   Contributions
-                Member2   Contributions
-                …         …
-                </pre>
-            </ul>
-            <p>2. Video Presentation: The proposal video is a 3-minute recorded presentation that summarizes your proposal using Microsoft PowerPoint, Google Slides, or equivalent.</p>
-            <p>3. GitHub Repository: Create a private GitHub repository using GT GitHub Enterprise or regular GitHub (you must have the GitHub Student Developer Pack).</p>
-        </section>
-    </main>
+    <div id="final-report" class="tab-content">
+        <h2>Final Report</h2>
+        <p>
+            This section will include your final report, summarizing the work completed, results obtained, and conclusions drawn from the project.
+        </p>
+    </div>
 
     <footer>
-        <p>&copy; 2024 Voice-Based Text Language Translation System. All rights reserved.</p>
+        <p>&copy; 2024 MosesTheRedSea. All rights reserved.</p>
     </footer>
+
+    <script>
+        function showTab(tabName) {
+            // Hide all tab contents
+            const tabs = document.querySelectorAll('.tab-content');
+            tabs.forEach(tab => tab.classList.remove('active'));
+
+            // Remove active class from all tabs
+            const tabElements = document.querySelectorAll('.tab');
+            tabElements.forEach(tabElement => tabElement.classList.remove('active'));
+
+            // Show the selected tab content
+            document.getElementById(tabName).classList.add('active');
+
+            // Add active class to the clicked tab
+            event.currentTarget.classList.add('active');
+        }
+    </script>
 </body>
 </html>
