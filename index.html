@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Voice Translation System</title>
-    <link rel="stylesheet" href="styles.css"> <!-- Link to your CSS file, if any -->
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -54,10 +53,17 @@
 </head>
 <body>
     <header>
-        <h1>Voice-Based Text Language Translation System</h1>
+        <h1>Voice Translation System</h1>
     </header>
 
-    <section id="overview" class="content">
+    <div class="navbar">
+        <a href="#" onclick="showContent('overview')">Overview</a>
+        <a href="#" onclick="showContent('proposal')">Proposal</a>
+        <a href="#" onclick="showContent('midterm-checkpoint')">Midterm Checkpoint</a>
+        <a href="#" onclick="showContent('final-report')">Final Report</a>
+    </div>
+
+    <section id="overview" class="content active">
         <h2>Overview</h2>
         <p>
             The Voice Translation System aims to bridge communication gaps by providing accurate translations of spoken language. Below are the key aspects of the project:
@@ -69,12 +75,6 @@
             <li>✅ Ensure system scalability for multiple languages and dialects.</li>
         </ul>
     </section>
-
-    <div class="navbar">
-        <a href="#" onclick="showContent('proposal')">Proposal</a>
-        <a href="#" onclick="showContent('midterm')">Midterm Checkpoint</a>
-        <a href="#" onclick="showContent('final')">Final Report</a>
-    </div>
 
     <section id="proposal" class="content">
         <h2>Proposal</h2>
@@ -128,7 +128,7 @@
     </footer>
 
     <script>
-        function showContent(section) {
+        function showContent(sectionId) {
             // Hide all content sections
             var contents = document.getElementsByClassName('content');
             for (var i = 0; i < contents.length; i++) {
@@ -136,12 +136,12 @@
             }
 
             // Show the selected content section
-            document.getElementById(section).style.display = 'block'; // Show the selected section
+            document.getElementById(sectionId).style.display = 'block'; // Show the selected section
         }
 
-        // Show the proposal section by default when the page loads
+        // Show the overview section by default when the page loads
         document.addEventListener('DOMContentLoaded', function() {
-            showContent('proposal');
+            showContent('overview'); // You can change 'overview' to 'proposal' to show it initially
         });
     </script>
 
