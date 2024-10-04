@@ -36,7 +36,7 @@ cd Voice-Based-Text-Language-Translation-System
 pip install -r requirements.txt
 ```
 
-##  Alternatively, Set Up Environment using Conda:
+##  Alternatively, Create Enviroment Using Conda 
 ```bash
 conda env create -f environment.yml
 conda activate voice-translation
