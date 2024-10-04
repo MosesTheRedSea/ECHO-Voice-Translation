@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Voice Translation System</title>
-    <!-- We have the Styles Inside the HTML File Instead of -->
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -13,7 +12,7 @@
             background-color: #f4f4f4;
         }
         header {
-            background: #35424a;
+            background: linear-gradient(to right, #0547a2, #0077cc);
             color: #ffffff;
             padding: 10px 0;
             text-align: center;
@@ -22,10 +21,10 @@
             background-color: #333;
             overflow: hidden;
             display: flex;
-            justify-content: center; /* Center the navigation items */
+            justify-content: center; 
         }
         .navbar a {
-            float: none; /* Disable float to keep items centered */
+            float: none; 
             display: block;
             color: white;
             text-align: center;
@@ -68,131 +67,135 @@
     <section id="overview" class="content active">
         <h2>Overview</h2>
         <p>
-            The Voice Translation System aims to bridge communication gaps by providing accurate translations of spoken language. Below are the key aspects of the project:
+            The Voice Translation System aims to bridge communication gaps by providing accurate translations of spoken language. In today’s interconnected world, voice translation systems have become essential tools for effective communication across diverse languages. Innovations from tech giants like Google with Google Translate and Meta's new Ray-Ban smart glasses highlight the growing importance of voice translation technology, making it more accessible and practical in everyday situations.
+        </p>
+        <p>
+            Our project aspires to design an effective and accurate translator that not only competes with these established solutions but also addresses their limitations. By leveraging advanced machine learning techniques, we will develop a robust translation system that can enhance the quality and speed of translations, making them more reliable for users in real-time communication.
         </p>
         <ul>
-            <li> Develop a robust translation system leveraging machine learning techniques.</li>
-            <li> Utilize diverse datasets for training to improve translation accuracy.</li>
-            <li> Implement user-friendly interfaces for easy interaction.</li>
-            <li> Ensure system scalability for multiple languages and dialects.</li>
+            <li>Develop a robust translation system leveraging machine learning techniques.</li>
+            <li>Utilize diverse datasets for training to improve translation accuracy.</li>
+            <li>Implement user-friendly interfaces for easy interaction.</li>
+            <li>Ensure system scalability for multiple languages and dialects.</li>
+            <li>Focus on minimizing latency to facilitate real-time voice translations, catering to users in dynamic environments.</li>
+            <li>Incorporate feedback mechanisms to continuously enhance translation quality based on user interactions.</li>
         </ul>
     </section>
-
+    
+    
     <section id="proposal" class="content">
         <h2>Proposal</h2>
+        <p><strong>Introduction/Background:</strong></p>
         <p>
-            <strong>Introduction/Background:</strong> 
-            <p>
-                At the core of many modern voice translation systems is the application of advanced machine learning techniques, notably Long Short-Term Memory (LSTM) networks. 
-                Originally, Google Translate relied heavily on LSTMs as part of its neural machine translation (NMT) framework, specifically through the Google Neural Machine Translation (GNMT) model introduced in 2016 [2].
-                Text-to-text translation was made possible by the development of the Transformer architecture. The Transformer model eliminated the need for RNNs and instead relied solely on self-attention mechanisms and positional encoding to capture relationships between words in a sequence. 
-            </p>
-            <p>
-                The Tatoeba English-Spanish Dataset contains over 265,817 sentence pairs, supporting multilingual NLP tasks, including machine translation, and facilitating linguistic research and model training.
-                The English-Spanish Dataset consists of pairs of sentences in English (source language) and their corresponding translations in Spanish (target language) giving the dataset a level of linguistic variety and flexibility.
-            </p>
-            <p> 
-                DataSet :  <a href="https://tatoeba.org/en/downloads ">Tatoeba English-Spanish</a>
-            </p>
-
+            At the core of many modern voice translation systems is the application of advanced machine learning techniques, notably Long Short-Term Memory (LSTM) networks. Originally, Google Translate relied heavily on LSTMs as part of its neural machine translation (NMT) framework, specifically through the Google Neural Machine Translation (GNMT) model introduced in 2016 [2]. 
         </p>
         <p>
-            <strong>Problem Definition:</strong> 
-            <p>
-                The problem we’re aiming to improve is the need for more accurate and efficient voice translations for individuals traveling or engaging in communication with people who speak different languages.  
-            </p>
+            Text-to-text translation was made possible by the development of the Transformer architecture. The Transformer model eliminated the need for RNNs and instead relied solely on self-attention mechanisms and positional encoding to capture relationships between words in a sequence.
         </p>
         <p>
-            <strong>Methods:</strong><br>
-            <p></p>
-            <strong>Data Preprocessing Methods Identified</strong><br>
-            <p>
-                Data Cleaning - Lowercasing all of the sentences and removing any punctuation that may be visible. Eliminating any duplicate sentence pairs, and rows where the text translation is missing.
-            </p>
-            <p>
-                BERT - Utilizing this model allows for richer feature extraction, which can lead to improved translation accuracy. BERT's pre-trained language representations can be fine-tuned for specific tasks, including translation
-            </p>
-            <p>
-                Contraction Integration - Contractions (e.g., "don't," "isn't") can be expanded to their full forms (e.g., "do not," "is not") during preprocessing. Creating a new duplicate dataset where contractions are present, to improve overall translation.
-            </p>
-
-            <strong> ML Algorithms/Models Identified</strong><br>
-            <p>
-               GRU (Gated Recurrent Unit) combine input and forget gates into a single update gate, allowing them to efficiently capture dependencies in sequential data, making them suitable for tasks like machine translation.
-            </p>
-            <p>
-                LSTM (Long Short-Te>rm Memory) are a type of recurrent neural network that utilize a complex gating mechanism to maintain context over long sequences, effectively managing the flow of information for accurate language translation.
-            </p>
-            <p>
-               Transformers leverage self-attention mechanisms to process input sequences in parallel, significantly improving training efficiency and translation accuracy compared to traditional RNN-based models.
-            </p>
+            The <a href="https://tatoeba.org/en/downloads">Tatoeba English-Spanish Dataset</a> contains over 265,817 sentence pairs, supporting multilingual NLP tasks, including machine translation, and facilitating linguistic research and model training. The English-Spanish Dataset consists of pairs of sentences in English (source language) and their corresponding translations in Spanish (target language), providing a level of linguistic variety and flexibility.
         </p>
+    
+        <p><strong>Problem Definition:</strong></p>
         <p>
-            <strong>(Potential) Results and Discussion</strong>
-            <p></p>
-            <strong>Quantitative Metrics</strong><br>
-            <p>
-                BLEU is a quantitative metric used to evaluate the quality of machine translation output.
-                It measures how many words and phrases from the generated translation match reference translations. 
-                The score ranges from 0 to 1, with higher scores indicating better translation quality.
-            </p>
-            <p>
-                The F1 score is a metric that combines precision and recall providing a balanced measure of a model's accuracy. 
-                It is particularly useful when dealing with imbalanced datasets, where one class may be more prevalent than others.
-            </p>
-            <p>
-                Loss measures the difference between the predicted output of the model and the actual output during training.
-                Lower loss indicates that the model is performing well, while higher loss suggests that the model needs improvement.
-            </p>
-            <p>
-                Overfitting occurs when a model learns the training data too well, capturing noise instead of general patterns. 
-                An evaluation metric for overfitting assesses the model's performance on unseen data versus its training performance.
-            </p>
-            <p>
-                Checking the token differences and similarities involves analyzing the generated translations by comparing the individual tokens (words or subworlds) to see how they differ from the reference translations.   
-            </p>
-
-            <strong>Project Goals</strong><br> 
-            <p>
-                Improve Translation Accuracy - Achieve high-quality translations across multiple languages, measured by BLEU or TER scores.
-            </p>
-            <p>
-                Latency - Work towards minimizing the time taken for the translation process, ensuring that the system can handle real-time translations for applications like voice translation.
-            </p>
-           
-            <strong>Expected Results</strong><br>
-            <p>
-                A Full working Voice Translation System working with English to Spanish. 
-            </p>
-
-            <p>
-                A trained text-to-text translation model with quantifiable improvements over baseline models.
-            </p>
-
-            <p>
-                Measurable improvements in translation quality using BLEU/TER scores compared to off-the-shelf translation solutions.
-            </p>
+            The problem we’re aiming to improve is the need for more accurate and efficient voice translations for individuals traveling or engaging in communication with people who speak different languages.
         </p>
-        <p>
-            <strong>References:</strong><br>
-            <p>
-               1.  M. H. A. R. Al-Azzeh and H. A. A. Al-Ramahi, "Voice Translation System: A Review," International Journal of Advanced Computer Science and Applications, vol. 10, no. 1, pp. 265-272, 2019. DOI: 10.14569/IJACSA.2019.0100133. Link.
-            </p>
-            <p>
-              2.Wu, Y., et al. "Google’s Neural Machine Translation System: Bridging the Gap between Human and Machine Translation." Google Research, 2016. Link.
-            </p>
-            <p>
-              3.M. G. Zeyer, J. G. von Neumann, and A. J. Spang, "Evaluating the Effectiveness of Voice Translation Systems for Communication in International Business," Journal of Language and Business, vol. 9, no. 2, pp. 1-15, 2020. Link.
-            </p>
-            <p>
-              4. Bahdanau, D., Cho, K., and Bengio, Y. "Neural Machine Translation by Jointly Learning to Align and Translate." ICLR, 2015. Link.
-            </p>
-            <p>
-              5. "Model Behind Google Translate: Seq2seq in Machine Learning." Analytics Vidhya, Feb. 2023. Link.
-            </p>
-        </p>
+    
+        <p><strong>Methods:</strong></p>
+        <p><strong>Data Preprocessing Methods Identified:</strong></p>
+        <ul>
+            <li>
+                <strong>Data Cleaning:</strong> Lowercasing all sentences, removing punctuation, eliminating duplicate sentence pairs, and rows with missing translations.
+            </li>
+            <li>
+                <strong>BERT:</strong> Utilizing this model allows for richer feature extraction, leading to improved translation accuracy. BERT's pre-trained language representations can be fine-tuned for specific tasks, including translation.
+            </li>
+            <li>
+                <strong>Contraction Integration:</strong> Expanding contractions (e.g., "don't," "isn't") to their full forms (e.g., "do not," "is not") during preprocessing, and creating a new duplicate dataset where contractions are present to improve overall translation.
+            </li>
+        </ul>
+    
+        <p><strong>ML Algorithms/Models Identified:</strong></p>
+        <ul>
+            <li>
+                <strong>GRU (Gated Recurrent Unit):</strong> Combines input and forget gates into a single update gate, allowing them to efficiently capture dependencies in sequential data, making them suitable for tasks like machine translation.
+            </li>
+            <li>
+                <strong>LSTM (Long Short-Term Memory):</strong> A type of recurrent neural network that utilizes a complex gating mechanism to maintain context over long sequences, effectively managing the flow of information for accurate language translation.
+            </li>
+            <li>
+                <strong>Transformers:</strong> Leverage self-attention mechanisms to process input sequences in parallel, significantly improving training efficiency and translation accuracy compared to traditional RNN-based models.
+            </li>
+        </ul>
+    
+        <p><strong>(Potential) Results and Discussion:</strong></p>
+        <p><strong>Quantitative Metrics:</strong></p>
+        <ul>
+            <li>
+                <strong>BLEU:</strong> A quantitative metric used to evaluate the quality of machine translation output, measuring how many words and phrases from the generated translation match reference translations. The score ranges from 0 to 1, with higher scores indicating better translation quality.
+            </li>
+            <li>
+                <strong>F1 Score:</strong> Combines precision and recall, providing a balanced measure of a model's accuracy, particularly useful for imbalanced datasets.
+            </li>
+            <li>
+                <strong>Loss:</strong> Measures the difference between the predicted output of the model and the actual output during training. Lower loss indicates good performance, while higher loss suggests the need for improvement.
+            </li>
+            <li>
+                <strong>Overfitting:</strong> Occurs when a model learns the training data too well, capturing noise instead of general patterns. Evaluation metrics for overfitting assess performance on unseen data versus training performance.
+            </li>
+            <li>
+                <strong>Token Differences and Similarities:</strong> Analyzing generated translations by comparing individual tokens (words or subwords) to see how they differ from reference translations.
+            </li>
+        </ul>
+    
+        <p><strong>Project Goals:</strong></p>
+        <ul>
+            <li>
+                <strong>Improve Translation Accuracy:</strong> Achieve high-quality translations across multiple languages, measured by BLEU or TER scores.
+            </li>
+            <li>
+                <strong>Latency:</strong> Minimize the time taken for the translation process to ensure real-time translations for applications like voice translation.
+            </li>
+        </ul>
+    
+        <p><strong>Expected Results:</strong></p>
+        <ul>
+            <li>A fully working Voice Translation System from English to Spanish.</li>
+            <li>A trained text-to-text translation model with quantifiable improvements over baseline models.</li>
+            <li>Measurable improvements in translation quality using BLEU/TER scores compared to off-the-shelf translation solutions.</li>
+        </ul>
+    
+        <p><strong>References:</strong></p>
+        <ol>
+            <li>
+                M. H. A. R. Al-Azzeh and H. A. A. Al-Ramahi, "Voice Translation System: A Review," <em>International Journal of Advanced Computer Science and Applications</em>, vol. 10, no. 1, pp. 265-272, 2019. DOI: 10.14569/IJACSA.2019.0100133. <a href="#">Link</a>.
+            </li>
+            <li>
+                Wu, Y., et al. "Google’s Neural Machine Translation System: Bridging the Gap between Human and Machine Translation." Google Research, 2016. <a href="#">Link</a>.
+            </li>
+            <li>
+                M. G. Zeyer, J. G. von Neumann, and A. J. Spang, "Evaluating the Effectiveness of Voice Translation Systems for Communication in International Business," <em>Journal of Language and Business</em>, vol. 9, no. 2, pp. 1-15, 2020. <a href="#">Link</a>.
+            </li>
+            <li>
+                Bahdanau, D., Cho, K., and Bengio, Y. "Neural Machine Translation by Jointly Learning to Align and Translate." ICLR, 2015. <a href="#">Link</a>.
+            </li>
+            <li>
+                "Model Behind Google Translate: Seq2seq in Machine Learning." Analytics Vidhya, Feb. 2023. <a href="#">Link</a>.
+            </li>
+        </ol>
+
+        <p><strong>Gantt Chart | Contribution Table</strong></p>
+
         <iframe src="https://docs.google.com/spreadsheets/d/e/2PACX-1vQ859xpT-fweSU_K_c8evd4WJc1w4r-YjaK_QBihn6EFeHcOKbhbD3Qm7nHtzihMFuYEx0O0iS-vfqk/pubhtml?gid=610421560&amp;single=true&amp;widget=true&amp;headers=false" width="100%" height="400"></iframe>
+
+        <p><strong>Video Presentation</strong></p>
+
+        <iframe width="560" height="315" src="https://www.youtube.com/embed/NKKxuRSPiWY?si=BHstRo7EnTZM6IoP" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+        
+        <p>Voice Translation System : <a href="https://github.com/MosesTheRedSea/Voice-Based-Text-Language-Translation-System"> GitHub Repository</a></p>
+
     </section>
+    
 
     <section id="midterm-checkpoint" class="content">
         <h2>Midterm Checkpoint</h2>
