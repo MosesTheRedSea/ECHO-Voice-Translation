@@ -2,8 +2,6 @@
 
 ![Logo](https://github.com/MosesTheRedSea/Voice-Based-Text-Language-Translation-System/blob/main/voice_translation.png)
 
-# Voice Translation System
-
 ## Project Overview
 The **Voice Translation System** is designed to provide accurate and efficient real-time translations of spoken language. By leveraging machine learning, this system can process audio inputs and return translations in multiple languages, catering to a diverse global audience.
 
