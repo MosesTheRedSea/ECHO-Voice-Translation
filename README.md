@@ -12,6 +12,8 @@ The project includes:
 - **Training machine learning models** for language translation.
 - **Evaluation of model performance** and real-time implementation.
 
+[Voice Translation System](https://mosestheredsea.github.io/Voice-Based-Text-Language-Translation-System/)
+
 ## Table of Contents
 - [Installation](#installation)
 - [Data](#data)
