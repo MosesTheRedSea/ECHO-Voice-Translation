@@ -1,0 +1,9 @@
+torch
+tensorflow
+scikit-learn
+matplotlib
+tensorflow-addons
+pytorch-lightning
+scikit-learn
+numpy
+pandas
