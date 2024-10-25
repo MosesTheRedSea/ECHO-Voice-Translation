@@ -1,5 +1,4 @@
 # ECHO
-- Voice Translation System
 
 ![Logo](https://github.com/MosesTheRedSea/Voice-Based-Text-Language-Translation-System/blob/main/echo.png)
 [mattcolewilson](https://dribbble.com/mattcolewilson)
