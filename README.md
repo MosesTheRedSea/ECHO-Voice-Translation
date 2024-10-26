@@ -1,7 +1,7 @@
 # ECHO
-- Voice Translation System
 
-![Logo](https://github.com/MosesTheRedSea/Voice-Based-Text-Language-Translation-System/blob/main/voice_translation.png)
+![Logo](https://github.com/MosesTheRedSea/Voice-Based-Text-Language-Translation-System/blob/main/echo.png)
+[mattcolewilson](https://dribbble.com/mattcolewilson)
 
 ## Project Overview
 The **Voice Translation System** is designed to provide accurate and efficient real-time translations of spoken language. By leveraging machine learning, this system can process audio inputs and return translations in multiple languages, catering to a diverse global audience.
@@ -11,7 +11,7 @@ The project includes:
 - **Training machine learning models** for language translation.
 - **Evaluation of model performance** and real-time implementation.
 
-[Voice Translation System](https://mosestheredsea.github.io/Voice-Based-Text-Language-Translation-System/)
+[Voice Translation System](https://mosestheredsea.github.io/ECHO-Voice-Translation/)
 
 ## Table of Contents
 - [Installation](#installation)
