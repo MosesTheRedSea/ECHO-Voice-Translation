@@ -6,3 +6,4 @@ scikit-learn
 matplotlib
 pytorch-lightning
 scikit-learn
+transformers

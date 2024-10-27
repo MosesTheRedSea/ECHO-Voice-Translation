@@ -19,15 +19,21 @@ from utils import LANGUAGES
 from utils import CONTRACTIONS
 
 import string
-# import transformers
-# from transformers import AutoModel, BertTokenizerFast
+import transformers
+from transformers import BertTokenizer, BertModel
 
 # Path To DataSet For Specifed Translation
 dataInputPath = "../../data/raw/"
 dataOutputPath = "../../data/processed/"
 
+# Split Our Data Into 2 Sets 80% Training - 20% Testing
+
 # Method For Data Cleaning
 def dataSetCleaning(df):
+    # Lowercasing all sentences
+    df['English'] = df['English'].str.lower()
+    df['Spanish'] = df['Spanish'].str.lower().fillna('')
+
     # Removing Punctuation From Both Data set's so that translation will be easier
     df['English'] = df['English'].str.translate(str.maketrans('', '', string.punctuation))
     df['Spanish'] = df['Spanish'].str.translate(str.maketrans('', '', string.punctuation))
@@ -41,53 +47,89 @@ def dataSetCleaning(df):
 
 # Method For Contraction Integration
 def dataSetContractionIntegration(df):
-    # Lowercasing all sentences
-    df['English'] = df['English'].str.lower()
-    df['Spanish'] = df['Spanish'].str.lower().fillna('')
-
     new_data = []
     for index, row in df.iterrows():
-        # Get The Original Sentence in English
-        english = row['English']
+        words = row["English"].split()
+        expanded_words = [CONTRACTIONS[word.lower()] if word.lower() in CONTRACTIONS else word for word in words]
+        expanded_sentence = ' '.join(expanded_words)
 
-         # CONTRACTIONS is a dictionary in the utils.py python file only a few
-        for contraction, expansion in CONTRACTIONS.items():
-            if contraction.lower() in english.lower():
-                english_sentence = {
-                    'English': english.replace(contraction, expansion),
-                    'Code': row['Code'],
-                    # Keep The Original Spanish Translation
-                    'Spanish': row['Spanish']
-                }
-                new_data.append(english_sentence)
-
-        # Now let's do every contraction in the sentence
-        full_sentence_expansion = english
-        for contraction, expansion in CONTRACTIONS.items():
-             if contraction.lower() in full_sentence_expansion.lower():
-                full_sentence_expansion.replace(contraction, expansion)
         english_sentence = {
-                    'English': full_sentence_expansion,
-                    'Code': row['Code'],
-                    # Keep The Original Spanish Translation
-                    'Spanish': row['Spanish']
-                }
+            "English": expanded_sentence,
+            "Spanish": row["Spanish"]
+        }
         new_data.append(english_sentence)
+    dataFrame = pd.DataFrame(new_data)
+    return pd.concat([df, dataFrame]).drop_duplicates().reset_index(drop=True)
 
-    dataFrame = pd.DataFrame(new_data)   
-    return pd.concat([df, dataFrame], ignore_index=True)
+# Geeks For Geeks Helped Us Write our BertEmbeddings Method
+def dataSetBertEmbeddings(text, model, tokenizer):
+    print("Starting embedding for:", text)
+    encoded_input = tokenizer(text, return_tensors='pt', padding=True, truncation=True)
+    print("Tokenization complete.")
+    while torch.no_grad():
+        output = model(**encoded_input)
+    print("Model inference complete.")
+    word_embeddings = output.last_hidden_state[:, 0, :]
+    print("Embedding extraction complete.")
+    return word_embeddings.squeeze().numpy()  # Convert to numpy array
+
+# Testing Code 
+# Method For Contraction Integration
+# def dataSetContractionIntegration(df):
+#     new_data = []
+#     for index, row in df.iterrows():
+#         # Get The Original Sentence in English
+#         full_sentence_expansion = row['English']
+
+#         for contraction, expansion in CONTRACTIONS.items():
+#              if contraction.lower() in full_sentence_expansion.lower():
+#                 full_sentence_expansion = full_sentence_expansion.replace(contraction, expansion)
+#         english_sentence = {
+#                     'English': full_sentence_expansion,
+#                     'Spanish': row['Spanish']
+#         }
+#         new_data.append(english_sentence)
+#     dataFrame = pd.DataFrame(new_data)  
+#     #return pd.concat([df, dataFrame])
+#     return pd.concat(([df, dataFrame])).drop_duplicates().reset_index(drop=True)
+
+# def dataSetContractionIntegration(df):
+#     new_data = []
+#     for index, row in df.iterrows():
+#         original_english = row['English']
+#         variations = [original_english]
+        
+#         for contraction, expansion in CONTRACTIONS.items():
+#             temp_variations = []
+#             for sentence in variations:
+#                 if contraction.lower() in sentence.lower():
+#                     temp_variations.append(sentence)
+#                     expanded_sentence = sentence.replace(contraction, expansion)
+#                     temp_variations.append(expanded_sentence)
+#                 else:
+#                     temp_variations.append(sentence)
+#             variations = temp_variations 
+#         variations = list(set(variations))
+        
+#         for variation in variations:
+#             new_data.append({
+#                 'English': variation,
+#                 'Spanish': row['Spanish'] 
+#             })
+#     new_data_df = pd.DataFrame(new_data)
+#     return pd.concat([df, new_data_df], ignore_index=True)
+#     # return pd.concat(([df, dataFrame])).drop_duplicates().reset_index(drop=True)
 
 # BERT - Hugging Face Transformers For Preprocessing Tokenization Converstion
 def dataSetBERToken(df):
-    
     pass
-
 
 # LOAD MODEL DATA - Convert To CSV & Clean
 # This is our dataset - Finally Got the relative path so it can work on call devices
 df = pd.read_csv(dataInputPath + DATATOGRAB, sep='\t', header=None) 
 # Incase we want to implement this with other languages AVOID HARDCODING - Moses Adewolu
 df.columns = [LANGUAGES[0], "Code", LANGUAGES[1]]
+df = df[[LANGUAGES[0], LANGUAGES[1]]]
 
 # Data Processing Sequence
 print(f"\n Data Set \n{df}")
@@ -101,7 +143,26 @@ df = dataSetCleaning(df)
 print(f"\n Dataset Cleaning \n{df}")
 
 # BERT Tokenization
+# Initialize the BERT tokenizer and model
+english_tokenizer = BertTokenizer.from_pretrained("bert-base-uncased")
+english_model = BertModel.from_pretrained("bert-base-uncased")
 
+# We Found BETO : A Spanish BERT (Tokenization)
+# https://huggingface.co/dccuchile/bert-base-spanish-wwm-uncased
+spanish_tokenizer = BertTokenizer.from_pretrained("dccuchile/bert-base-spanish-wwm-cased")
+spanish_model = BertModel.from_pretrained("dccuchile/bert-base-spanish-wwm-cased")
+
+# # Get BERT embeddings for English
+# df['BERT_Embeddings_English'] = df['English'].apply(lambda x: dataSetBertEmbeddings(x, english_model, english_tokenizer))
+# # Get BERT embeddings for Spanish
+# df['BERT_Embeddings_Spanish'] = df['Spanish'].apply(lambda x: dataSetBertEmbeddings(x, spanish_model, spanish_tokenizer))
+
+test_sentence = "Hello!"
+embedding = dataSetBertEmbeddings(test_sentence, english_model, english_tokenizer)
+print("Embedding for test sentence:", embedding)
+
+# Clean The DataSet
+print(f"\n BERT Embedding \n{df}")
 
 # # English/Spanish/English_Spanish_translation.csv
 # outputAddOns = f"{LANGUAGES[0]}/{LANGUAGES[1]}/{LANGUAGES[0]}_{LANGUAGES[1]}_translation.csv"
