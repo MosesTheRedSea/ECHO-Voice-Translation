@@ -11,22 +11,19 @@ import torch.nn as nn
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import classification_report
 
-# Utilities - Like Our Constants
+# Utilities - Like Our Constants and Other Methods
 import utils as utils
 from utils import DATATOGRAB
 from utils import DATATOSTORE
 from utils import LANGUAGES
 from utils import CONTRACTIONS
+from utils import INPUTPATH
+from utils import TRAINPATH
+from utils import TESTPATH
 
 import string
 import transformers
 from transformers import BertTokenizer, BertModel
-
-# Path To DataSet For Specifed Translation
-dataInputPath = "../../data/raw/"
-dataOutputPath = "../../data/processed/"
-
-# Split Our Data Into 2 Sets 80% Training - 20% Testing
 
 # Method For Data Cleaning
 def dataSetCleaning(df):
@@ -48,11 +45,10 @@ def dataSetCleaning(df):
 # Method For Contraction Integration
 def dataSetContractionIntegration(df):
     new_data = []
-    for index, row in df.iterrows():
+    for _, row in df.iterrows():
         words = row["English"].split()
         expanded_words = [CONTRACTIONS[word.lower()] if word.lower() in CONTRACTIONS else word for word in words]
         expanded_sentence = ' '.join(expanded_words)
-
         english_sentence = {
             "English": expanded_sentence,
             "Spanish": row["Spanish"]
@@ -61,17 +57,17 @@ def dataSetContractionIntegration(df):
     dataFrame = pd.DataFrame(new_data)
     return pd.concat([df, dataFrame]).drop_duplicates().reset_index(drop=True)
 
-# Geeks For Geeks Helped Us Write our BertEmbeddings Method
+# BERT - Hugging Face Transformers For Preprocessing Tokenization Converstion
 def dataSetBertEmbeddings(text, model, tokenizer):
     print("Starting embedding for:", text)
     encoded_input = tokenizer(text, return_tensors='pt', padding=True, truncation=True)
     print("Tokenization complete.")
-    while torch.no_grad():
+    with torch.no_grad():
         output = model(**encoded_input)
     print("Model inference complete.")
     word_embeddings = output.last_hidden_state[:, 0, :]
     print("Embedding extraction complete.")
-    return word_embeddings.squeeze().numpy()  # Convert to numpy array
+    return word_embeddings.squeeze().numpy()  
 
 # Testing Code 
 # Method For Contraction Integration
@@ -80,7 +76,6 @@ def dataSetBertEmbeddings(text, model, tokenizer):
 #     for index, row in df.iterrows():
 #         # Get The Original Sentence in English
 #         full_sentence_expansion = row['English']
-
 #         for contraction, expansion in CONTRACTIONS.items():
 #              if contraction.lower() in full_sentence_expansion.lower():
 #                 full_sentence_expansion = full_sentence_expansion.replace(contraction, expansion)
@@ -110,7 +105,6 @@ def dataSetBertEmbeddings(text, model, tokenizer):
 #                     temp_variations.append(sentence)
 #             variations = temp_variations 
 #         variations = list(set(variations))
-        
 #         for variation in variations:
 #             new_data.append({
 #                 'English': variation,
@@ -120,15 +114,13 @@ def dataSetBertEmbeddings(text, model, tokenizer):
 #     return pd.concat([df, new_data_df], ignore_index=True)
 #     # return pd.concat(([df, dataFrame])).drop_duplicates().reset_index(drop=True)
 
-# BERT - Hugging Face Transformers For Preprocessing Tokenization Converstion
-def dataSetBERToken(df):
-    pass
-
 # LOAD MODEL DATA - Convert To CSV & Clean
 # This is our dataset - Finally Got the relative path so it can work on call devices
-df = pd.read_csv(dataInputPath + DATATOGRAB, sep='\t', header=None) 
+df = pd.read_csv(INPUTPATH + DATATOGRAB, sep='\t', header=None) 
+
 # Incase we want to implement this with other languages AVOID HARDCODING - Moses Adewolu
-df.columns = [LANGUAGES[0], "Code", LANGUAGES[1]]
+df.columns = ["number", LANGUAGES[0], "Code", LANGUAGES[1]]
+
 df = df[[LANGUAGES[0], LANGUAGES[1]]]
 
 # Data Processing Sequence
@@ -152,19 +144,42 @@ english_model = BertModel.from_pretrained("bert-base-uncased")
 spanish_tokenizer = BertTokenizer.from_pretrained("dccuchile/bert-base-spanish-wwm-cased")
 spanish_model = BertModel.from_pretrained("dccuchile/bert-base-spanish-wwm-cased")
 
-# # Get BERT embeddings for English
-# df['BERT_Embeddings_English'] = df['English'].apply(lambda x: dataSetBertEmbeddings(x, english_model, english_tokenizer))
-# # Get BERT embeddings for Spanish
-# df['BERT_Embeddings_Spanish'] = df['Spanish'].apply(lambda x: dataSetBertEmbeddings(x, spanish_model, spanish_tokenizer))
+# Get BERT embeddings for English
+df['English BERT'] = df['English'].apply(lambda x: dataSetBertEmbeddings(x, english_model, english_tokenizer))
 
-test_sentence = "Hello!"
-embedding = dataSetBertEmbeddings(test_sentence, english_model, english_tokenizer)
-print("Embedding for test sentence:", embedding)
+# Get BERT embeddings for Spanish
+df['Spanish BERT'] = df['Spanish'].apply(lambda x: dataSetBertEmbeddings(x, spanish_model, spanish_tokenizer))
 
-# Clean The DataSet
+df = df[[LANGUAGES[0], 'English BERT', LANGUAGES[1], 'Spanish BERT']]
+
+# Clean The DataSet - 
 print(f"\n BERT Embedding \n{df}")
 
-# # English/Spanish/English_Spanish_translation.csv
-# outputAddOns = f"{LANGUAGES[0]}/{LANGUAGES[1]}/{LANGUAGES[0]}_{LANGUAGES[1]}_translation.csv"
-# df.to_csv(dataOutputPath + outputAddOns, index=False, encoding="utf-8")
-# print(f"DataFrame -> CSV -> {dataOutputPath + outputAddOns}")
+# Splitting The Dataset 
+# 80% For Training Our Model 
+# 20% Testing our GRU 
+
+train_df, test_df = train_test_split(df, test_size=0.2, random_state=42)
+
+# Print the shapes of the training and testing sets
+print(f"Training set shape: {train_df.shape}")
+
+print(f"Testing set shape: {test_df.shape}")
+
+# I need to save the Training and Testing Data to the Correct Path
+
+# Correct Path For Train Data Location Data/Processed/English/Spanish/Train
+train_output_path = TRAINPATH + f"{LANGUAGES[0]}_{LANGUAGES[1]}_train.csv"
+
+# Correct Path For Test Data Location Data/Processed/English/Spanish/Test
+test_output_path = TESTPATH + f"{LANGUAGES[0]}_{LANGUAGES[1]}_test.csv"
+
+# Creating The Final CSV We Use to Train our Model 
+train_df.to_csv(train_output_path, index=False, encoding="utf-8")
+
+# Creating The Final CSV We Use to Test our Model 
+test_df.to_csv(test_output_path, index=False, encoding="utf-8")
+
+print(f"Training DataFrame saved to: {train_output_path}")
+
+print(f"Testing DataFrame saved to: {test_output_path}")

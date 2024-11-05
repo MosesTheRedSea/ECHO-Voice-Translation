@@ -1,0 +1,6 @@
+{
+    "python.analysis.extraPaths": [
+        "./scripts/preprocessing",
+        "./models/Text_Text"
+    ]
+}

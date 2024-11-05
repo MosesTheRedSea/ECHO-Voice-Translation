@@ -1,9 +1,9 @@
+nltk
 numpy
 pandas
 torch
 tensorflow
 scikit-learn
 matplotlib
-pytorch-lightning
 scikit-learn
 transformers
