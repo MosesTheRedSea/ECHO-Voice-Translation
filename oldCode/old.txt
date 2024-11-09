@@ -1,0 +1,353 @@
+import torch
+import torch.nn as nn
+
+# GRU (Gated Recurrent Unit) Model
+
+# A GRU, or Gated Recurrent Unit, is a type of RNN that uses gates to control the flow of information through the network. 
+# This allows it to capture long-term dependencies in sequential data more effectively than traditional RNNs.
+
+"""
+Update Gate: Determines how much of the previous hidden state to keep.
+Reset Gate: Determines how much of the previous hidden state to forget.
+New Hidden State: Calculated based on the input, the previous hidden state, and the gates.
+"""
+
+# Steps For Implementing the GRU
+
+# Tokenization: Break down sentences into words or subwords.
+# Numericalization: Convert tokens into numerical representations.
+# Padding: Make sequences of equal length for efficient batch processing.
+
+# I used the BERT Transformer 
+# (Bidirectional Encoder Representations from Transformers (BERT) was developed by Google as a way 
+# to pre-train deep bidirectional representations from unlabeled text by jointly conditioning on both left and right context in all layers.)
+
+"""
+Model Architecture
+Encoder-Decoder Architecture:
+
+Encoder:
+
+Input: English sentence (numericalized and padded).
+Process: GRU layers process the input sequence, capturing contextual information.
+Output: Context vector representing the entire input sequence.
+Decoder:
+
+Input: Start token and previous output token (initially a start token).
+Process: GRU layers process the input, conditioned on the context vector from the encoder.
+Output: Probability distribution over the vocabulary, predicting the next token in the Spanish translation.
+Decoding: Use techniques like beam search or greedy search to generate the complete translation.
+"""
+
+# GRU Encoder for translation (using BERT embeddings)
+class EncoderGRU(nn.Module):
+    def __init__(self, input_size, hidden_size, num_layers):
+        super(EncoderGRU, self).__init__()
+        self.gru = nn.GRU(input_size=input_size, hidden_size=hidden_size, num_layers=num_layers, batch_first=True)
+        self.hidden_size = hidden_size
+
+    def forward(self, x):
+        outputs, hidden = self.gru(x)
+        return outputs, hidden
+
+class DecoderGRU(nn.Module):
+    def __init__(self, hidden_size, output_size, num_layers):
+        super(DecoderGRU, self).__init__()
+        self.gru = nn.GRU(input_size=hidden_size, hidden_size=hidden_size, num_layers=num_layers, batch_first=True)
+        self.fc = nn.Linear(hidden_size, output_size)
+
+    def forward(self, x, hidden):
+        outputs, hidden = self.gru(x, hidden)
+        outputs = self.fc(outputs)
+        return outputs, hidden
+
+class Seq2Seq(nn.Module):
+    def __init__(self, encoder, decoder):
+        super(Seq2Seq, self).__init__()
+        self.encoder = encoder
+        self.decoder = decoder
+
+    def forward(self, encoder_input, decoder_input):
+        encoder_outputs, encoder_hidden = self.encoder(encoder_input)
+        decoder_outputs, _ = self.decoder(decoder_input, encoder_hidden)
+        return decoder_outputs
+
+
+
+
+# class TranslationGRU(nn.Module):
+#     def __init__(self, input_size, hidden_size, output_size, num_layers=1):
+#         super(TranslationGRU, self).__init__()
+#         self.hidden_size = hidden_size
+#         self.num_layers = num_layers
+#         # Encoder
+#         self.encoder_gru = nn.GRU(input_size, hidden_size, num_layers, batch_first=True)
+#         # Decoder
+#         self.decoder_gru = nn.GRU(hidden_size, hidden_size, num_layers, batch_first=True)
+#         self.fc = nn.Linear(hidden_size, output_size)
+        
+#     def forward(self, english_embedding, spanish_embedding=None, training=True):
+#         # Encoding the English embedding
+#         encoder_output, hidden = self.encoder_gru(english_embedding)
+#         # Decoding to Spanish
+#         decoder_output, _ = self.decoder_gru(hidden)
+#         # Output layer to predict each token
+#         output = self.fc(decoder_output)
+#         return output
+
+
+
+Train.py
+
+import os
+import sys
+sys.path.append(os.path.join(os.path.dirname(__file__), '/storage/ice1/2/6/madewolu9/Voice-Based-Language-Translation-System/scripts/preprocessing/'))
+sys.path.append(os.path.join(os.path.dirname(__file__), '/storage/ice1/2/6/madewolu9/Voice-Based-Language-Translation-System/models/Text_Text/'))
+import torch
+import utils
+import gru_model
+import transformers
+import pandas as pd
+import torch.nn as nn
+import torch.optim as optim
+from torch.utils.data import DataLoader
+from torch.utils.data import Dataset
+from sklearn.metrics import accuracy_score
+from sklearn.metrics import f1_score
+from nltk.translate.bleu_score import sentence_bleu
+from transformers import BertTokenizer
+import matplotlib.pyplot as plt  # Correct import for plotting
+from gru_model import EncoderGRU, DecoderGRU, Seq2Seq
+from utils import TRAINPATH, LANGUAGES 
+
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+
+# Define the dataset class
+class TranslationDataset(Dataset):
+    def __init__(self, csv_file):
+        self.data = pd.read_csv(csv_file)
+
+    def __len__(self):
+        return len(self.data)
+
+    def __getitem__(self, idx):
+        english_sentence = self.data.iloc[idx]['English']
+        spanish_sentence = self.data.iloc[idx]['Spanish']
+
+        # Get the embeddings as a string and remove the square brackets
+        english_bert_str = self.data.iloc[idx]['English BERT'].strip('[]')
+        spanish_bert_str = self.data.iloc[idx]['Spanish BERT'].strip('[]')
+
+        # Convert space-separated BERT embeddings from string to list of floats
+        bert_embedding_english = [float(x) for x in english_bert_str.split()]
+        bert_embedding_spanish = [float(x) for x in spanish_bert_str.split()]
+
+        # Convert the list of floats to a PyTorch tensor
+        bert_embedding_english = torch.tensor(bert_embedding_english, dtype=torch.float32)
+        bert_embedding_spanish = torch.tensor(bert_embedding_spanish, dtype=torch.float32)
+
+        return english_sentence, spanish_sentence, bert_embedding_english, bert_embedding_spanish
+
+# Tokenizer Specifically For Spanish
+tokenizer = BertTokenizer.from_pretrained('dccuchile/bert-base-spanish-wwm-cased')
+
+# Instantiate dataset and dataloaders
+train_dataset = TranslationDataset( "../../data/processed/English/Spanish/Train/" + "English_Spanish_train.csv")
+train_loader = DataLoader(train_dataset, batch_size=32, shuffle=True)
+
+# Hyperparameters
+hidden_size = 768  # Typically, this should match the BERT output size
+num_layers = 3
+output_size = len(tokenizer.get_vocab())
+learning_rate = 0.001
+num_epochs = 10
+
+# Initialize models, loss function, and optimizer
+# encoder = EncoderGRU(hidden_size, num_layers)
+# decoder = DecoderGRU(hidden_size, output_size, num_layers)
+# model = Seq2Seq(encoder, decoder)
+# model = model.to(device)
+
+encoder = EncoderGRU(input_size=hidden_size, hidden_size=hidden_size, num_layers=num_layers)
+decoder = DecoderGRU(hidden_size=hidden_size, output_size=output_size, num_layers=num_layers)
+model = Seq2Seq(encoder, decoder).to(device)
+
+criterion = nn.CrossEntropyLoss()
+optimizer = optim.Adam(model.parameters(), lr=learning_rate)
+
+# Initialize lists to store metrics
+losses, bleu_scores, f1_scores = [], [], []
+
+# Training Loop
+for epoch in range(num_epochs):
+    model.train()
+    total_loss = 0
+    all_predictions = []
+    all_references = []
+
+    for english_sentences, spanish_sentences, bert_embeddings_english, bert_embeddings_spanish in train_loader:
+        bert_embeddings_english, bert_embeddings_spanish = bert_embeddings_english.to(device), bert_embeddings_spanish.to(device)
+        optimizer.zero_grad()
+
+        # Forward pass
+        outputs = model(bert_embeddings_english, bert_embeddings_spanish)
+        
+
+        # Calculate loss (considering only the actual target sentences)
+        outputs = outputs.view(-1, outputs.size(-1))  # Reshape for loss calculation
+        target = spanish_sentences[:, 1:].contiguous().view(-1)  # Skip <start> token
+        loss = criterion(outputs, target)
+
+        # Backward pass and optimization
+        loss.backward()
+        optimizer.step()
+        
+        total_loss += loss.item()
+
+        # Generate predictions (convert predicted indices to sentence)
+        _, predicted_indices = torch.max(outputs, dim=1)
+        predicted_sentences = [tokenizer.convert_ids_to_tokens(ids.tolist()) for ids in predicted_indices]
+
+        all_predictions.extend(predicted_sentences)
+        all_references.extend(spanish_sentences[:, 1:].tolist())  # Store the reference sentences
+
+    avg_loss = total_loss / len(train_loader)
+    losses.append(avg_loss)  # Append average loss to the list
+
+    # Calculate BLEU and F1 scores for the epoch
+    bleu_score = sum(sentence_bleu([ref], pred) for ref, pred in zip(all_references, all_predictions)) / len(all_predictions)
+    bleu_scores.append(bleu_score)  # Append BLEU score to the list
+
+    f1 = f1_score([item for sublist in all_references for item in sublist], 
+                   [item for sublist in all_predictions for item in sublist], 
+                   average='weighted')
+    f1_scores.append(f1)  # Append F1 score to the list
+
+    print(f"Epoch [{epoch+1}/{num_epochs}], Loss: {avg_loss:.4f}, BLEU: {bleu_score:.4f}, F1 Score: {f1:.4f}")
+
+# Save the trained model
+model_save_path = '/storage/ice1/2/6/madewolu9/Voice-Based-Language-Translation-System/models/Text_Text/GRU/model.pth'  # Correct path
+torch.save(model.state_dict(), model_save_path)
+print(f"Model saved to {model_save_path}")
+
+# Plotting
+plt.figure(figsize=(12, 5))
+
+plt.subplot(1, 3, 1)
+plt.plot(losses, label='Loss')
+plt.title('Training Loss')
+plt.xlabel('Epochs')
+plt.ylabel('Loss')
+plt.legend()
+
+plt.subplot(1, 3, 2)
+plt.plot(bleu_scores, label='BLEU Score', color='orange')
+plt.title('BLEU Score over Epochs')
+plt.xlabel('Epochs')
+plt.ylabel('BLEU Score')
+plt.legend()
+
+plt.subplot(1, 3, 3)
+plt.plot(f1_scores, label='F1 Score', color='green')
+plt.title('F1 Score over Epochs')
+plt.xlabel('Epochs')
+plt.ylabel('F1 Score')
+plt.legend()
+
+plt.tight_layout()
+plt.show()
+
+
+# GRU (Gated Recurrent Unit) Model
+
+# A GRU, or Gated Recurrent Unit, is a type of RNN that uses gates to control the flow of information through the network. 
+# This allows it to capture long-term dependencies in sequential data more effectively than traditional RNNs.
+
+"""
+Update Gate: Determines how much of the previous hidden state to keep.
+Reset Gate: Determines how much of the previous hidden state to forget.
+New Hidden State: Calculated based on the input, the previous hidden state, and the gates.
+"""
+
+# Steps For Implementing the GRU
+
+# Tokenization: Break down sentences into words or subwords.
+# Numericalization: Convert tokens into numerical representations.
+# Padding: Make sequences of equal length for efficient batch processing.
+
+# I used the BERT Transformer 
+# (Bidirectional Encoder Representations from Transformers (BERT) was developed by Google as a way 
+# to pre-train deep bidirectional representations from unlabeled text by jointly conditioning on both left and right context in all layers.)
+
+"""
+Model Architecture
+Encoder-Decoder Architecture:
+
+Encoder:
+
+Input: English sentence (numericalized and padded).
+Process: GRU layers process the input sequence, capturing contextual information.
+Output: Context vector representing the entire input sequence.
+Decoder:
+
+Input: Start token and previous output token (initially a start token).
+Process: GRU layers process the input, conditioned on the context vector from the encoder.
+Output: Probability distribution over the vocabulary, predicting the next token in the Spanish translation.
+Decoding: Use techniques like beam search or greedy search to generate the complete translation.
+"""
+
+# GRU Encoder for translation (using BERT embeddings)
+class EncoderGRU(nn.Module):
+    def __init__(self, input_size, hidden_size, num_layers):
+        super(EncoderGRU, self).__init__()
+        self.gru = nn.GRU(input_size=input_size, hidden_size=hidden_size, num_layers=num_layers, batch_first=True)
+        self.hidden_size = hidden_size
+
+    def forward(self, x):
+        outputs, hidden = self.gru(x)
+        return outputs, hidden
+
+class DecoderGRU(nn.Module):
+    def __init__(self, hidden_size, output_size, num_layers):
+        super(DecoderGRU, self).__init__()
+        self.gru = nn.GRU(input_size=hidden_size, hidden_size=hidden_size, num_layers=num_layers, batch_first=True)
+        self.fc = nn.Linear(hidden_size, output_size)
+
+    def forward(self, x, hidden):
+        outputs, hidden = self.gru(x, hidden)
+        outputs = self.fc(outputs)
+        return outputs, hidden
+
+class Seq2Seq(nn.Module):
+    def __init__(self, encoder, decoder):
+        super(Seq2Seq, self).__init__()
+        self.encoder = encoder
+        self.decoder = decoder
+
+    def forward(self, encoder_input, decoder_input):
+        encoder_outputs, encoder_hidden = self.encoder(encoder_input)
+        decoder_outputs, _ = self.decoder(decoder_input, encoder_hidden)
+        return decoder_outputs
+
+
+
+
+# class TranslationGRU(nn.Module):
+#     def __init__(self, input_size, hidden_size, output_size, num_layers=1):
+#         super(TranslationGRU, self).__init__()
+#         self.hidden_size = hidden_size
+#         self.num_layers = num_layers
+#         # Encoder
+#         self.encoder_gru = nn.GRU(input_size, hidden_size, num_layers, batch_first=True)
+#         # Decoder
+#         self.decoder_gru = nn.GRU(hidden_size, hidden_size, num_layers, batch_first=True)
+#         self.fc = nn.Linear(hidden_size, output_size)
+        
+#     def forward(self, english_embedding, spanish_embedding=None, training=True):
+#         # Encoding the English embedding
+#         encoder_output, hidden = self.encoder_gru(english_embedding)
+#         # Decoding to Spanish
+#         decoder_output, _ = self.decoder_gru(hidden)
+#         # Output layer to predict each token
+#         output = self.fc(decoder_output)
+#         return output

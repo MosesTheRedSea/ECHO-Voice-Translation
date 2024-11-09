@@ -1,5 +1,8 @@
-DATATOGRAB = "English/Spanish/test_Spanish.tsv"
+DATATOGRAB = "English/Spanish/English_Spanish.tsv"
 DATATOSTORE = "English/Spanish/"
+INPUTPATH = "../../data/raw/"
+TRAINPATH = "../../data/processed/English/Spanish/Train/"
+TESTPATH = "../../data/processed/English/Spanish/Test/"
 LANGUAGES = ["English", "Spanish", "French", "German", "Korean", "Mandarin"]
 CONTRACTIONS = {
     "i'm": "I am",
@@ -100,3 +103,6 @@ CONTRACTIONS = {
     "t'ain't": "it is not",
     "woulda": "would have",
 }
+
+
+
