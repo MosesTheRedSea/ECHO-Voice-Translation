@@ -1,6 +1,14 @@
+<<<<<<< HEAD
 {
     "python.analysis.extraPaths": [
         "./scripts/preprocessing",
         "./models/Text_Text"
     ]
+=======
+{
+    "python.analysis.extraPaths": [
+        "./scripts/preprocessing",
+        "./models/Text_Text"
+    ]
+>>>>>>> 46467f48de0d9b576e420d7ed6f02cd8a58f0e78
 }

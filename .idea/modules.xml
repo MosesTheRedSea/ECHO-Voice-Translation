@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ProjectModuleManager">
@@ -5,4 +6,13 @@
       <module fileurl="file://$PROJECT_DIR$/.idea/Voice-Based-Language-Translation-System.iml" filepath="$PROJECT_DIR$/.idea/Voice-Based-Language-Translation-System.iml" />
     </modules>
   </component>
+=======
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://$PROJECT_DIR$/.idea/Voice-Based-Language-Translation-System.iml" filepath="$PROJECT_DIR$/.idea/Voice-Based-Language-Translation-System.iml" />
+    </modules>
+  </component>
+>>>>>>> 46467f48de0d9b576e420d7ed6f02cd8a58f0e78
 </project>

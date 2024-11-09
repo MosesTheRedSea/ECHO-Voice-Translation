@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 nltk
 numpy
 pandas
@@ -6,4 +7,14 @@ tensorflow
 scikit-learn
 matplotlib
 scikit-learn
+=======
+nltk
+numpy
+pandas
+torch
+tensorflow
+scikit-learn
+matplotlib
+scikit-learn
+>>>>>>> 46467f48de0d9b576e420d7ed6f02cd8a58f0e78
 transformers

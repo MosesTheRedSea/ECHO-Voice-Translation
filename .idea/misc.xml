@@ -1,7 +1,16 @@
+<<<<<<< HEAD
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="Black">
     <option name="sdkName" value="Python 3.13 (Voice-Based-Language-Translation-System) (2)" />
   </component>
   <component name="ProjectRootManager" version="2" project-jdk-name="Python 3.13 (Voice-Based-Language-Translation-System) (2)" project-jdk-type="Python SDK" />
+=======
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="Black">
+    <option name="sdkName" value="Python 3.13 (Voice-Based-Language-Translation-System) (2)" />
+  </component>
+  <component name="ProjectRootManager" version="2" project-jdk-name="Python 3.13 (Voice-Based-Language-Translation-System) (2)" project-jdk-type="Python SDK" />
+>>>>>>> 46467f48de0d9b576e420d7ed6f02cd8a58f0e78
 </project>
