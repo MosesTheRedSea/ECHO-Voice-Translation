@@ -200,9 +200,324 @@
     <section id="midterm-checkpoint" class="content">
         <h2>Midterm Checkpoint</h2>
         <p>
-            This section will contain your midterm checkpoint details, including any updates on your progress, challenges faced, and changes to the proposal as necessary.
+            Here is our midterm checkpoint for our Voice-Based Language Translation System, focusing on data preprocessing, machine learning, and model training for English-Spanish translation using a Sequence-to-Sequence (Seq2Seq) model with a GRU-based encoder-decoder architecture.
         </p>
+
+        <h3>Introduction/Background</h3>
+        <p>
+            The Voice Translation System aims to bridge communication gaps by providing accurate translations of spoken language. In today’s interconnected world, voice translation systems have become essential tools for effective communication across diverse languages. Innovations from tech giants like Google with Google Translate and Meta's new Ray-Ban smart glasses highlight the growing importance of voice translation technology, making it more accessible and practical in everyday situations.
+        </p>
+        <p>
+            Our project aspires to design an effective and accurate translator that not only competes with these established solutions but also addresses their limitations. By leveraging advanced machine learning techniques, we will develop a robust translation system that can enhance the quality and speed of translations, making them more reliable for users in real-time communication.
+        </p>
+        
+        <h3>Problem Definition</h3>
+        <p>
+            The problem we’re aiming to improve is the need for more accurate and efficient voice translations for individuals traveling or engaging in communication with people who speak different languages.
+        </p>
+    
+    
+        <h3>Methods</h3>
+        <p>
+            The preprocessing of the dataset is performed using various techniques:
+        </p>
+        <ul>
+            <li><strong>Lowercasing:</strong> All text is converted to lowercase to maintain consistency.</li>
+            <li><strong>Punctuation Removal:</strong> Both English and Spanish sentences have their punctuation removed to make translation easier.</li>
+            <li><strong>Removing Duplicates:</strong> Duplicate sentence pairs are dropped to avoid redundancy in the training data.</li>
+            <li><strong>Handling Contractions:</strong> A contraction dictionary is applied to expand contractions in the English text, improving model accuracy by reducing variation in language forms.</li>
+        </ul>
+    
+        <ul>
+            <li><strong>dataSetCleaning(df):</strong> This function performs lowercasing, punctuation removal, and duplicate elimination.
+                <pre><code class="language-python">
+        def dataSetCleaning(df):
+            # Lowercasing all sentences
+            df['English'] = df['English'].str.lower()
+            df['Spanish'] = df['Spanish'].str.lower().fillna('')
+        
+            # Removing Punctuation From Both Data set's so that translation will be easier
+            df['English'] = df['English'].str.translate(str.maketrans('', '', string.punctuation))
+            df['Spanish'] = df['Spanish'].str.translate(str.maketrans('', '', string.punctuation))
+        
+            # Eliminating duplicate sentence pairs
+            df.drop_duplicates(subset=['English', 'Spanish'])
+        
+            #  Remove rows with missing translations.
+            df[df['Spanish'] != '']
+            return df
+                </code></pre>
+            </li>
+
+            <p> In order to fully expand the contraction we had a python file which held a dictionary of the major contractions and their expanded form in english</p>
+           
+            <pre><code>
+                CONTRACTIONS = {
+                    "i'm": "I am",
+                    "you're": "you are",
+                    "he's": "he is",
+                    "she's": "she is",
+                    "it's": "it is",
+                    "we're": "we are",
+                    "they're": "they are",
+                    "i've": "I have",
+                    "you've": "you have",
+                    "we've": "we have",
+                    "they've": "they have",
+                    "i'd": "I would",
+                    "you'd": "you would",
+                    "he'd": "he would",
+                    "she'd": "she would",
+                    "we'd": "we would",
+                    "they'd": "they would",
+                    "i'll": "I will",
+                    "you'll": "you will",
+            </code></pre>
+
+            <li><strong>dataSetContractionIntegration(df):</strong> Expands contractions in the English sentences using a predefined contraction dictionary.
+                <pre><code class="language-python">
+        def dataSetContractionIntegration(df):
+            new_data = []
+            for _, row in df.iterrows():
+                words = row["English"].split()
+                expanded_words = [CONTRACTIONS[word.lower()] if word.lower() in CONTRACTIONS else word for word in words]
+                expanded_sentence = ' '.join(expanded_words)
+                english_sentence = {
+                    "English": expanded_sentence,
+                    "Spanish": row["Spanish"]
+                }
+                new_data.append(english_sentence)
+            dataFrame = pd.DataFrame(new_data)
+            return pd.concat([df, dataFrame]).drop_duplicates().reset_index(drop=True)
+                </code></pre>
+            </li>
+        
+            <li><strong>dataSetBertEmbeddings(text, model, tokenizer):</strong> Utilizes the BERT tokenizer and model from Hugging Face to obtain word embeddings for tokenized text.</li>
+
+            <pre><code>
+                def dataSetBertEmbeddings(text, model, tokenizer):
+                    encoded_input = tokenizer(text, return_tensors='pt', padding=True, truncation=True)
+                    with torch.no_grad():
+                        output = model(**encoded_input)
+                    word_embeddings = output.last_hidden_state[:, 0, :]
+                    return word_embeddings.squeeze().numpy()  
+
+            </code></pre>
+
+            <p> In order to get the BERT Embeedings for the English & Spanish Sentences we used a transformer model through the Huggingface API</p>
+
+            <pre><code>
+                english_tokenizer = BertTokenizer.from_pretrained("bert-base-uncased")
+                english_model = BertModel.from_pretrained("bert-base-uncased")
+
+                # We Found BETO : A Spanish BERT (Tokenization)
+                # https://huggingface.co/dccuchile/bert-base-spanish-wwm-uncased
+                spanish_tokenizer = BertTokenizer.from_pretrained("dccuchile/bert-base-spanish-wwm-cased")
+                spanish_model = BertModel.from_pretrained("dccuchile/bert-base-spanish-wwm-cased")
+
+                # Get BERT embeddings for English
+                df['English BERT'] = df['English'].apply(lambda x: dataSetBertEmbeddings(x, english_model, english_tokenizer))
+
+                # Get BERT embeddings for Spanish
+                df['Spanish BERT'] = df['Spanish'].apply(lambda x: dataSetBertEmbeddings(x, spanish_model, spanish_tokenizer))
+
+            </code></pre>
+    
+            <p>
+                The translation system utilizes a custom Seq2Seq model with a GRU-based Encoder and Decoder. This architecture is commonly used for machine translation tasks due to its ability to capture long-range dependencies and generate output sequences.
+            </p>
+        
+            <h4>Key Components:</h4>
+            <ul>
+                <li><strong>Encoder:</strong> Encodes the input (English) sentence into a context vector.</li>
+                <pre><code>
+                    class Encoder(nn.Module):
+                        def __init__(self, input_dim, embedding_dim, hidden_dim, n_layers, dropout):
+                            super(Encoder, self).__init__()
+                            self.embedding = nn.Embedding(input_dim, embedding_dim)  # Using embedding_dim
+                            self.gru = nn.GRU(embedding_dim, hidden_dim, n_layers, dropout=dropout)
+                            self.dropout = nn.Dropout(dropout)
+
+                        def forward(self, input):
+                            embedded = self.embedding(input)
+                            embedded = self.dropout(embedded)
+                            outputs, hidden = self.gru(embedded)
+                            return outputs, hidden
+                </code></pre>
+                <li><strong>Decoder:</strong> Decodes the context vector into the output (Spanish) sentence.</li>
+                <pre><code>
+                    class Decoder(nn.Module):
+                        def __init__(self, output_dim, embedding_dim, hidden_dim, n_layers, dropout):
+                            super(Decoder, self).__init__()
+                            self.embedding = nn.Embedding(output_dim, embedding_dim)
+                            self.gru = nn.GRU(embedding_dim, hidden_dim, n_layers, dropout=dropout)
+                            self.fc_out = nn.Linear(hidden_dim, output_dim)
+                            self.dropout = nn.Dropout(dropout)
+
+                        def forward(self, input, hidden):
+                            # Convert input token indices to embeddings
+                            embedded = self.embedding(input).unsqueeze(0)  # (1, batch_size, embedding_dim)
+                            embedded = self.dropout(embedded)
+
+                            # Adjust hidden dimensions for single-batch case
+                            if hidden.dim() == 3 and hidden.size(1) == 1:
+                                hidden = hidden.squeeze(1)  # Squeeze batch dimension for unbatched case
+
+                            # Pass through GRU
+                            output, hidden = self.gru(embedded, hidden.unsqueeze(1) if hidden.dim() == 2 else hidden)
+
+                            # Generate predictions
+                            prediction = self.fc_out(output.squeeze(0))
+                            return prediction, hidden.squeeze(1) if hidden.dim() == 3 else hidden
+                </code></pre>
+                <li><strong>Seq2Seq Model:</strong> This model ties together the encoder and decoder, making it a complete sequence-to-sequence framework for translation.</li>
+
+                <pre><code>
+                    class Seq2Seq(nn.Module):
+                        def __init__(self, encoder, decoder, device):
+                            super().__init__()
+                            self.encoder = encoder
+                            self.decoder = decoder
+                            self.device = device
+
+                        def forward(self, src, trg, teacher_forcing_ratio=0.5):
+                            batch_size = src.shape[1]
+                            trg_len = trg.shape[0]
+                            trg_vocab_size = self.decoder.fc_out.out_features
+
+                            outputs = torch.zeros(trg_len, batch_size, trg_vocab_size).to(self.device)
+                            _, hidden = self.encoder(src)  # Ensure only hidden is passed
+
+                            input = trg[0, :]  # First target token
+                            for t in range(1, trg_len):
+                                output, hidden = self.decoder(input, hidden)
+                                outputs[t] = output
+
+                                top1 = output.argmax(1)
+                                input = trg[t] if torch.rand(1).item() < teacher_forcing_ratio else top1
+
+                            return outputs
+                </code></pre>
+        </ul>
+    
+        <h4>Implementation Details:</h4>
+        <ul>
+            <li>The TranslationDataset class prepares the dataset, including tokenizing sentences and converting them into tensors for model training.</li>
+            <li>The model uses Cross-Entropy Loss for optimization, suitable for classification tasks such as predicting each token in the target sequence.</li>
+            <li>BLEU and F1 scores are computed during training as evaluation metrics for translation quality.</li>
+        </ul>
+
+        <h3>Results and Discussion</h3>
+
+        <p>
+            The training loop runs for 10 epochs, where:
+        </p>
+        <ul>
+            <li>The model is trained with batch-wise data using the DataLoader object.</li>
+            <li>At each epoch, the model computes the loss, BLEU score, and F1 score for the translation quality.</li>
+            <li>A checkpoint is saved after each epoch to allow model recovery if needed.</li>
+        </ul><br>
+
+        <div style="text-align: center;">
+            <img src="metrics_per_epoch.png" alt="Training Results" width="1200" />
+            <p>Figure 1: Plot of Training Loss, BLEU, and F1 Scores over Epochs</p>
+        </div>
+
+        <ul>
+
+            <p>
+            <li><strong>Loss</strong> Loss quantifies how far off the model's predictions are from the expected results. </li>
+            According to the Graph above, The training loss is decreasing steadily across epochs, indicating that the model is learning and improving. This is a good sign.
+            However, the rate of decrease does slow down a bit It's possible that the model has reached a point of diminishing returns, where further training might not significantly improve the loss.
+            </p>
+
+            <p>
+            <li><strong>BLEU score:</strong> Measures the quality of the generated translations by comparing them to reference translations.</li>
+            The BLEU score decreases steadily across all epochs. This suggests that the model's translation quality should be increasing. It starts at 0.03284 and ends at
+            0.03279. According to BLEU,  0.7 - 0.9: Good translation quality and 0.9 - 1.0: Excellent translation quality.
+            </p>
+            
+            <p>
+                <li><strong>F1 Score:</strong> A metric for classification performance, particularly useful for evaluating precision and recall in multi-class tasks.</li>
+                Our F1 score increased at the beginner reaching a value of 0.006555 it then dips downards to 0.006530. However as we reach the 5th Epoch it increases back to
+                0.006545. Our F1 score is increasing which means our model's perceision is increasing. According to F1, 0.7 - 0.9: Good performance and 0.9 - 1.0: Excellent performance
+            </p>
+            
+            <strong> Next Steps </strong>
+            <li>BLEU and F1 scores over epochs, showing how well the model's translation quality improves during training.</li>
+            <p>
+                To improve our model's performance, we will begin by closely monitoring both training and validation losses to identify any overfitting or underfitting issues. 
+                We will adjust the learning rate and experiment with different batch sizes to stabilize training. 
+                Additionally, we will review our data preprocessing pipeline for any inconsistencies and ensure the quality of our translations. 
+                Exploring more advanced architectures, such as the Transformer or models with attention mechanisms, could enhance translation quality. Finally, implementing early stopping and tuning hyperparameters will help us optimize the model and address the decreasing BLEU score.
+            </p>
+            
+        </ul>
+    
+        <p><strong>References:</strong></p>
+        <ol>
+            <li>
+                M. H. A. R. Al-Azzeh and H. A. A. Al-Ramahi, "Voice Translation System: A Review," <em>International Journal of Advanced Computer Science and Applications</em>, vol. 10, no. 1, pp. 265-272, 2019. DOI: 10.14569/IJACSA.2019.0100133. <a href="#">Link</a>.
+            </li>
+            <li>
+                Wu, Y., et al. "Google’s Neural Machine Translation System: Bridging the Gap between Human and Machine Translation." Google Research, 2016. <a href="#">Link</a>.
+            </li>
+            <li>
+                M. G. Zeyer, J. G. von Neumann, and A. J. Spang, "Evaluating the Effectiveness of Voice Translation Systems for Communication in International Business," <em>Journal of Language and Business</em>, vol. 9, no. 2, pp. 1-15, 2020. <a href="#">Link</a>.
+            </li>
+            <li>
+                Bahdanau, D., Cho, K., and Bengio, Y. "Neural Machine Translation by Jointly Learning to Align and Translate." ICLR, 2015. <a href="#">Link</a>.
+            </li>
+            <li>
+                "Model Behind Google Translate: Seq2seq in Machine Learning." Analytics Vidhya, Feb. 2023. <a href="#">Link</a>.
+            </li>
+        </ol>
+        
+        <p><strong>Contribution Table</strong></p>
+
+        <table style="width: 100%; border-collapse: collapse;">
+            <thead>
+                <tr>
+                    <th style="border: 1px solid black; padding: 8px; text-align: left;">Team Member</th>
+                    <th style="border: 1px solid black; padding: 8px; text-align: left;">Midterm Contributions</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td style="border: 1px solid black; padding: 8px;">Moses Adewolu</td>
+                    <td style="border: 1px solid black; padding: 8px;">Implemented Preprocessing methods, data cleaning, contraction integration, BERT Embedding via HuggingFace API.
+                     Implemented GRU Model, Encoder, Decoder along with SequenceToSequence Model. Worked on Method training code along with method evaluation and results. Worked on miterm proprosal. </td>
+                </tr>
+                <tr>
+                    <td style="border: 1px solid black; padding: 8px;">Christian</td>
+                    <td style="border: 1px solid black; padding: 8px;">Helped find dataset, worked on preprocessing methods, dataSetContractionIntegration, dataCleaning. Helped with training the model
+                        on PACE ICE.
+                    </td>
+                </tr>
+                <tr>
+                    <td style="border: 1px solid black; padding: 8px;">Ethan</td>
+                    <td style="border: 1px solid black; padding: 8px;">Helped work on midterm proposal presentation. Formatted Results, specifically BLEU, Loss, F1 Scores.</td>
+                </tr>
+                <tr>
+                    <td style="border: 1px solid black; padding: 8px;">Arun</td>
+                    <td style="border: 1px solid black; padding: 8px;">Helped work on midterm proposal presentation. Formatted Results, specifically BLEU, Loss, F1 Scores.</td>
+                </tr>
+                <!-- Add more rows as necessary -->
+            </tbody>
+        </table>
+
+        <p><strong>Gantt Chart </strong></p>
+
+        <ul>
+            <li>
+                <iframe src="https://docs.google.com/spreadsheets/d/e/2PACX-1vQ859xpT-fweSU_K_c8evd4WJc1w4r-YjaK_QBihn6EFeHcOKbhbD3Qm7nHtzihMFuYEx0O0iS-vfqk/pubhtml?gid=610421560&amp;single=true&amp;widget=true&amp;headers=false" 
+                        width="100%" height="400" frameborder="0" allowfullscreen></iframe>
+            </li>
+        </ul>
+        
+
     </section>
+    
 
     <section id="final-report" class="content">
         <h2>Final Report</h2>
