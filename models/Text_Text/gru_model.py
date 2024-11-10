@@ -1,200 +1,128 @@
-<<<<<<< HEAD
 import torch
 import torch.nn as nn
+import random  # Import random module for teacher forcing
 
-# GRU (Gated Recurrent Unit) Model
-
-# A GRU, or Gated Recurrent Unit, is a type of RNN that uses gates to control the flow of information through the network. 
-# This allows it to capture long-term dependencies in sequential data more effectively than traditional RNNs.
-
-"""
-Update Gate: Determines how much of the previous hidden state to keep.
-Reset Gate: Determines how much of the previous hidden state to forget.
-New Hidden State: Calculated based on the input, the previous hidden state, and the gates.
-"""
-
-# Steps For Implementing the GRU
-
-# Tokenization: Break down sentences into words or subwords.
-# Numericalization: Convert tokens into numerical representations.
-# Padding: Make sequences of equal length for efficient batch processing.
-
-# I used the BERT Transformer 
-# (Bidirectional Encoder Representations from Transformers (BERT) was developed by Google as a way 
-# to pre-train deep bidirectional representations from unlabeled text by jointly conditioning on both left and right context in all layers.)
-
-"""
-Model Architecture
-Encoder-Decoder Architecture:
-
-Encoder:
-
-Input: English sentence (numericalized and padded).
-Process: GRU layers process the input sequence, capturing contextual information.
-Output: Context vector representing the entire input sequence.
-Decoder:
-
-Input: Start token and previous output token (initially a start token).
-Process: GRU layers process the input, conditioned on the context vector from the encoder.
-Output: Probability distribution over the vocabulary, predicting the next token in the Spanish translation.
-Decoding: Use techniques like beam search or greedy search to generate the complete translation.
-"""
-
-class EncoderGRU(nn.Module):
-    def __init__(self, hidden_size, num_layers=3):
-        super(EncoderGRU, self).__init__()
-        self.gru = nn.GRU(768, hidden_size, num_layers, batch_first=True)  
-
-    def forward(self, bert_embeddings):
-        outputs, hidden = self.gru(bert_embeddings)
-        return outputs, hidden
-
-class DecoderGRU(nn.Module):
-    def __init__(self, hidden_size, output_size, num_layers=3): 
-        super(DecoderGRU, self).__init__()
-        self.gru = nn.GRU(hidden_size * 2, hidden_size, num_layers, batch_first=True)
-        self.fc = nn.Linear(hidden_size, output_size)
-
-    def forward(self, input, hidden, encoder_outputs):
-        output, hidden = self.gru(input, hidden)
-        output = self.fc(output)
-        return output, hidden
-
-class Seq2Seq(nn.Module):
-    def __init__(self, encoder, decoder):
-        super(Seq2Seq, self).__init__()
-        self.encoder = encoder
-        self.decoder = decoder
-
-    def forward(self, src, trg, teacher_forcing_ratio=0.5):
-        encoder_outputs, hidden = self.encoder(src)
-        decoder_input = trg[:, 0].unsqueeze(1) 
-        outputs = []
-
-        for t in range(1, trg.size(1)):
-            output, hidden = self.decoder(decoder_input, hidden, encoder_outputs)
-            outputs.append(output)
-            teacher_force = torch.rand(1).item() < teacher_forcing_ratio
-            decoder_input = trg[:, t].unsqueeze(1) if teacher_force else output.argmax(1).unsqueeze(1)
-
-        return torch.stack(outputs, dim=1)
-
-# class TranslationGRU(nn.Module):
-#     def __init__(self, input_size, hidden_size, output_size, num_layers=1):
-#         super(TranslationGRU, self).__init__()
-#         self.hidden_size = hidden_size
-#         self.num_layers = num_layers
-#         # Encoder
-#         self.encoder_gru = nn.GRU(input_size, hidden_size, num_layers, batch_first=True)
-#         # Decoder
-#         self.decoder_gru = nn.GRU(hidden_size, hidden_size, num_layers, batch_first=True)
-#         self.fc = nn.Linear(hidden_size, output_size)
-        
-#     def forward(self, english_embedding, spanish_embedding=None, training=True):
-#         # Encoding the English embedding
-#         encoder_output, hidden = self.encoder_gru(english_embedding)
-#         # Decoding to Spanish
-#         decoder_output, _ = self.decoder_gru(hidden)
-#         # Output layer to predict each token
-#         output = self.fc(decoder_output)
-=======
 import torch
 import torch.nn as nn
+import torch.optim as optim
 
-# GRU (Gated Recurrent Unit) Model
+# Encoder (GRU-based)
+class Encoder(nn.Module):
+    def __init__(self, input_dim, embedding_dim, hidden_dim, n_layers, dropout):
+        super(Encoder, self).__init__()
+        self.embedding = nn.Embedding(input_dim, embedding_dim)  # Using embedding_dim
+        self.gru = nn.GRU(embedding_dim, hidden_dim, n_layers, dropout=dropout)
+        self.dropout = nn.Dropout(dropout)
 
-# A GRU, or Gated Recurrent Unit, is a type of RNN that uses gates to control the flow of information through the network. 
-# This allows it to capture long-term dependencies in sequential data more effectively than traditional RNNs.
-
-"""
-Update Gate: Determines how much of the previous hidden state to keep.
-Reset Gate: Determines how much of the previous hidden state to forget.
-New Hidden State: Calculated based on the input, the previous hidden state, and the gates.
-"""
-
-# Steps For Implementing the GRU
-
-# Tokenization: Break down sentences into words or subwords.
-# Numericalization: Convert tokens into numerical representations.
-# Padding: Make sequences of equal length for efficient batch processing.
-
-# I used the BERT Transformer 
-# (Bidirectional Encoder Representations from Transformers (BERT) was developed by Google as a way 
-# to pre-train deep bidirectional representations from unlabeled text by jointly conditioning on both left and right context in all layers.)
-
-"""
-Model Architecture
-Encoder-Decoder Architecture:
-
-Encoder:
-
-Input: English sentence (numericalized and padded).
-Process: GRU layers process the input sequence, capturing contextual information.
-Output: Context vector representing the entire input sequence.
-Decoder:
-
-Input: Start token and previous output token (initially a start token).
-Process: GRU layers process the input, conditioned on the context vector from the encoder.
-Output: Probability distribution over the vocabulary, predicting the next token in the Spanish translation.
-Decoding: Use techniques like beam search or greedy search to generate the complete translation.
-"""
-
-class EncoderGRU(nn.Module):
-    def __init__(self, hidden_size, num_layers=3):
-        super(EncoderGRU, self).__init__()
-        self.gru = nn.GRU(768, hidden_size, num_layers, batch_first=True)  
-
-    def forward(self, bert_embeddings):
-        outputs, hidden = self.gru(bert_embeddings)
+    def forward(self, input):
+        embedded = self.embedding(input)
+        embedded = self.dropout(embedded)
+        outputs, hidden = self.gru(embedded)
         return outputs, hidden
 
-class DecoderGRU(nn.Module):
-    def __init__(self, hidden_size, output_size, num_layers=3): 
-        super(DecoderGRU, self).__init__()
-        self.gru = nn.GRU(hidden_size * 2, hidden_size, num_layers, batch_first=True)
-        self.fc = nn.Linear(hidden_size, output_size)
+# Decoder (GRU-based)
+class Decoder(nn.Module):
+    def __init__(self, output_dim, embedding_dim, hidden_dim, n_layers, dropout):
+        super(Decoder, self).__init__()
+        self.embedding = nn.Embedding(output_dim, embedding_dim)
+        self.gru = nn.GRU(embedding_dim, hidden_dim, n_layers, dropout=dropout)
+        self.fc_out = nn.Linear(hidden_dim, output_dim)
+        self.dropout = nn.Dropout(dropout)
 
-    def forward(self, input, hidden, encoder_outputs):
-        output, hidden = self.gru(input, hidden)
-        output = self.fc(output)
-        return output, hidden
+    def forward(self, input, hidden):
+        # Convert input token indices to embeddings
+        embedded = self.embedding(input).unsqueeze(0)  # (1, batch_size, embedding_dim)
+        embedded = self.dropout(embedded)
 
+        # Adjust hidden dimensions for single-batch case
+        if hidden.dim() == 3 and hidden.size(1) == 1:
+            hidden = hidden.squeeze(1)  # Squeeze batch dimension for unbatched case
+
+        # Pass through GRU
+        output, hidden = self.gru(embedded, hidden.unsqueeze(1) if hidden.dim() == 2 else hidden)
+
+        # Generate predictions
+        prediction = self.fc_out(output.squeeze(0))
+        return prediction, hidden.squeeze(1) if hidden.dim() == 3 else hidden
+
+
+
+# Seq2Seq Model (Encoder + Decoder)
 class Seq2Seq(nn.Module):
-    def __init__(self, encoder, decoder):
-        super(Seq2Seq, self).__init__()
+    def __init__(self, encoder, decoder, device):
+        super().__init__()
         self.encoder = encoder
         self.decoder = decoder
+        self.device = device
 
     def forward(self, src, trg, teacher_forcing_ratio=0.5):
-        encoder_outputs, hidden = self.encoder(src)
-        decoder_input = trg[:, 0].unsqueeze(1) 
-        outputs = []
+        batch_size = src.shape[1]
+        trg_len = trg.shape[0]
+        trg_vocab_size = self.decoder.fc_out.out_features
 
-        for t in range(1, trg.size(1)):
-            output, hidden = self.decoder(decoder_input, hidden, encoder_outputs)
-            outputs.append(output)
-            teacher_force = torch.rand(1).item() < teacher_forcing_ratio
-            decoder_input = trg[:, t].unsqueeze(1) if teacher_force else output.argmax(1).unsqueeze(1)
+        outputs = torch.zeros(trg_len, batch_size, trg_vocab_size).to(self.device)
+        _, hidden = self.encoder(src)  # Ensure only hidden is passed
 
-        return torch.stack(outputs, dim=1)
+        input = trg[0, :]  # First target token
+        for t in range(1, trg_len):
+            output, hidden = self.decoder(input, hidden)
+            outputs[t] = output
 
-# class TranslationGRU(nn.Module):
-#     def __init__(self, input_size, hidden_size, output_size, num_layers=1):
-#         super(TranslationGRU, self).__init__()
-#         self.hidden_size = hidden_size
+            top1 = output.argmax(1)
+            input = trg[t] if torch.rand(1).item() < teacher_forcing_ratio else top1
+
+        return outputs
+
+# class GRUTranslationModel(nn.Module):
+#     def __init__(self, hidden_dim, num_layers, output_size, dropout=0.1):
+#         super(GRUTranslationModel, self).__init__()
+#         self.hidden_dim = hidden_dim
 #         self.num_layers = num_layers
-#         # Encoder
-#         self.encoder_gru = nn.GRU(input_size, hidden_size, num_layers, batch_first=True)
-#         # Decoder
-#         self.decoder_gru = nn.GRU(hidden_size, hidden_size, num_layers, batch_first=True)
-#         self.fc = nn.Linear(hidden_size, output_size)
+#         self.output_size = output_size
         
-#     def forward(self, english_embedding, spanish_embedding=None, training=True):
-#         # Encoding the English embedding
-#         encoder_output, hidden = self.encoder_gru(english_embedding)
-#         # Decoding to Spanish
-#         decoder_output, _ = self.decoder_gru(hidden)
-#         # Output layer to predict each token
-#         output = self.fc(decoder_output)
->>>>>>> 46467f48de0d9b576e420d7ed6f02cd8a58f0e78
-#         return output
+#         # Projection layer to match the GRU input size
+#         self.embedding_projection = nn.Linear(768, 512)  # Assuming BERT embeddings of size 768
+        
+#         # Encoder GRU
+#         self.encoder_gru = nn.GRU(hidden_dim, hidden_dim, num_layers, batch_first=True, dropout=dropout)
+        
+#         # Decoder GRU
+#         self.decoder_gru = nn.GRU(hidden_dim, hidden_dim, num_layers, batch_first=True, dropout=dropout)
+        
+#         # Output linear layer
+#         self.fc_out = nn.Linear(hidden_dim, output_size)
+
+#         # Dropout layer
+#         self.dropout = nn.Dropout(dropout)
+
+#     def forward(self, src, trg, teacher_forcing_ratio=0.5):
+#         # Ensure src is float before passing it to the projection layer
+#         src = src.float()  # Convert to float32
+        
+#         # Project the BERT embeddings to the correct size for the GRU
+#         src = self.embedding_projection(src)  # Projecting to 512 dimensions
+        
+#         # Encoder
+#         _, hidden = self.encoder_gru(src)  # We discard the outputs of the GRU
+
+#         # Prepare the initial decoder input (usually <SOS> token, now an embedding)
+#         input = trg[:, 0].unsqueeze(1)  # First token in target sequence
+#         input = input.float()  # Convert to float32 if needed
+        
+#         # Decoder
+#         outputs = []
+#         for t in range(1, trg.size(1)):  # Start from the second token
+#             output, hidden = self.decoder_gru(input, hidden)  # GRU forward pass
+
+#             output = self.fc_out(output)  # Linear layer to get prediction for the token
+#             outputs.append(output)
+            
+#             # Teacher forcing: use the true token as the next input (or predicted token)
+#             teacher_force = random.random() < teacher_forcing_ratio  # Use random to decide if we use teacher forcing
+#             top1 = output.argmax(2)  # Get the index of the highest probability token
+
+#             input = trg[:, t].unsqueeze(1) if teacher_force else top1.unsqueeze(1)  # Teacher forcing or prediction
+
+#         # Concatenate all the output predictions along the sequence dimension
+#         outputs = torch.cat(outputs, dim=1)
+#         return outputs
