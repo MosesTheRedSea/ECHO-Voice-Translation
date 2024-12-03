@@ -10,6 +10,8 @@ from torch.utils.data import DataLoader, Dataset
 from transformers import BertTokenizer
 import matplotlib.pyplot as plt
 from gru_model import Encoder, Decoder, Seq2Seq
+#from lstm_model import Encoder, Decoder, Seq2Seq uncomment to use lstm model, comment other models
+
 from utils import TRAINPATH, LANGUAGES
 from sklearn.metrics import f1_score
 from nltk.translate.bleu_score import sentence_bleu
@@ -48,9 +50,12 @@ tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')  # Use a BERT tok
 train_data_path = "../../data/processed/English/Spanish/Train/English_Spanish_train.csv"
 train_data = pd.read_csv(train_data_path)  # Load the dataset
 
+#train_data_sampled = train_data.sample(frac=0.10, random_state=200) 
+#train_dataset = TranslationDataset(train_data_sampled, tokenizer, max_len=256) //if you want to sample a 10 percent of data
+
 # Prepare Dataset and DataLoader
 train_dataset = TranslationDataset(train_data, tokenizer)
-train_loader = DataLoader(train_dataset, batch_size=32, shuffle=True, pin_memory=True)
+train_loader = DataLoader(train_dataset, batch_size=128, shuffle=True, pin_memory=True)
 
 # Model setup
 embedding_dim = 512
@@ -113,12 +118,22 @@ start_epoch, train_losses, bleu_scores, f1_scores = load_checkpoint()
 # Training loop
 epochs = 10
 for epoch in range(start_epoch, epochs):
+
+    '''
+    If the sample is changed every 3 epochs
+    if epoch % 3 == 0: 
+        train_data_sampled = train_data.sample(frac=0.10, random_state=epoch) 
+        train_dataset = TranslationDataset(train_data_sampled, tokenizer, max_len=256)
+        train_loader = DataLoader(train_dataset, batch_size=128, shuffle=True, pin_memory=True)
+    '''
+
     print("Start EPOCH")
     model.train()
     total_loss = 0
     epoch_bleu = 0
     epoch_f1 = 0
 
+    #num_batches = len(train_loader) saves the number of batches
     for batch_idx, (eng_input, spa_target) in enumerate(train_loader):
         eng_input = eng_input.to(device)
         spa_target = spa_target.to(device)
@@ -141,6 +156,16 @@ for epoch in range(start_epoch, epochs):
             f1 = calculate_f1(reference, hypothesis)
             epoch_bleu += bleu
             epoch_f1 += f1
+    '''
+    averages results + saves them
+    avg_loss = total_loss / num_batches
+    avg_bleu = epoch_bleu / num_batches
+    avg_f1 = epoch_f1 / num_batches
+
+    train_losses.append(avg_loss)
+    bleu_scores.append(avg_bleu)
+    f1_scores.append(avg_f1)
+    '''
     
     # Save checkpoint at the end of each epoch
     print("EPOC FINISHED")
