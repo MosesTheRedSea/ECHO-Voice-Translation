@@ -13,49 +13,37 @@ The project includes:
 
 [Voice Translation System](https://mosestheredsea.github.io/ECHO-Voice-Translation/)
 
-## Table of Contents
-- [Installation](#installation)
-- [Data](#data)
-- [Model Training](#model-training)
-- [Evaluation](#evaluation)
-- [Usage](#usage)
-- [Results](#results)
-- [Contributing](#contributing)
-- [License](#license)
+# Project Name
 
-## Installation
+This repository contains the code and resources for the English-to-Spanish translation project. The repository includes directories for data, models, scripts for preprocessing and training, and necessary requirements to run the project.
 
-To get started with the project, clone the repository and install the required dependencies.
+## Directory Structure
 
-```bash
-git clone https://github.com/yourusername/Voice-Based-Text-Language-Translation-System
-cd Voice-Based-Text-Language-Translation-System
-```
+### /data/raw/English
+This directory contains the English-to-Spanish dataset in `.txt` format.
 
-## Install the dependencies:
-```bash
-pip install -r requirements.txt
-```
+- `/data/raw/English`: Holds the raw English-to-Spanish text dataset.
 
-##  Alternatively, Create Enviroment Using Conda 
-```bash
-conda env create -f environment.yml
-conda activate voice-translation
-```
+### /models/Tet_Text
+This directory includes the models for translation, including different architectures like GRU, LSTM, and Transformer.
 
-## Data
+- `/models/Tet_Text/gru_model.py`: Contains the code for the GRU-based translation model.
+- `/models/Tet_Text/lst_model.py`: Contains the code for the LSTM-based translation model.
+- `/models/Tet_Text/transformer_model.py`: Contains the code for the Transformer-based translation model.
 
-The dataset used for this project includes diverse speech datasets and language corpora. Data is located in the `data/` folder.
+### /scripts/preprocessing
+This directory includes the necessary preprocessing code for preparing the dataset before training.
 
-- **Raw Data**: Unprocessed speech files.
-- **Processed Data**: Preprocessed files used for model training.
+- `/scripts/preprocessing/data_processing.py`: Contains the functions for processing the raw data, such as tokenization, padding, etc.
+- `/scripts/preprocessing/utils.py`: Contains utility functions used for preprocessing, like vocabulary creation or text cleaning.
 
-You can find information about preprocessing in `src/data_preprocessing.py`.
+### /scripts/training
+This directory holds the training scripts for training the model.
 
-## Model Training
+- `/scripts/training/process.py`: Contains the functions for loading the data, preparing the dataset, and handling the training loop.
+- `/scripts/training/train.py`: Main script for training the translation model.
 
-The ML models used for voice translation are implemented in the `src/models.py`. We have experimented with various machine learning techniques, including:
+### /requirements.txt
+This file contains the list of required Python packages needed to run the project.
 
-- **Gated Recurrent Unit - (GRU)**
--  **Long Short Term Memory  - (LSTM)**
-- **Transformer Models**
+- `/requirements.txt`: A text file listing the Python dependencies required for the project.
