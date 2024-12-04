@@ -676,21 +676,23 @@
             <ul>
                 <li><strong>Encoder:</strong> Encodes the input (English) sentence into a context vector.</li>
                 <pre><code>
+                    # Encoder (GRU-based)
                     class Encoder(nn.Module):
                         def __init__(self, input_dim, embedding_dim, hidden_dim, n_layers, dropout):
                             super(Encoder, self).__init__()
-                            self.embedding = nn.Embedding(input_dim, embedding_dim)  # Using embedding_dim
+                            self.embedding = nn.Embedding(input_dim, embedding_dim) 
                             self.gru = nn.GRU(embedding_dim, hidden_dim, n_layers, dropout=dropout)
                             self.dropout = nn.Dropout(dropout)
-
+                    
                         def forward(self, input):
                             embedded = self.embedding(input)
                             embedded = self.dropout(embedded)
-                            outputs, hidden = self.gru(embedded)
+                            outputs, hidden = self.gru(embedded)  
                             return outputs, hidden
                 </code></pre>
                 <li><strong>Decoder:</strong> Decodes the context vector into the output (Spanish) sentence.</li>
                 <pre><code>
+                    # Decoder (GRU-based)
                     class Decoder(nn.Module):
                         def __init__(self, output_dim, embedding_dim, hidden_dim, n_layers, dropout):
                             super(Decoder, self).__init__()
@@ -698,20 +700,16 @@
                             self.gru = nn.GRU(embedding_dim, hidden_dim, n_layers, dropout=dropout)
                             self.fc_out = nn.Linear(hidden_dim, output_dim)
                             self.dropout = nn.Dropout(dropout)
-
+                    
                         def forward(self, input, hidden):
-                            # Convert input token indices to embeddings
                             embedded = self.embedding(input).unsqueeze(0)  # (1, batch_size, embedding_dim)
                             embedded = self.dropout(embedded)
-
-                            # Adjust hidden dimensions for single-batch case
+                    
                             if hidden.dim() == 3 and hidden.size(1) == 1:
                                 hidden = hidden.squeeze(1)  # Squeeze batch dimension for unbatched case
-
-                            # Pass through GRU
+                    
                             output, hidden = self.gru(embedded, hidden.unsqueeze(1) if hidden.dim() == 2 else hidden)
-
-                            # Generate predictions
+                    
                             prediction = self.fc_out(output.squeeze(0))
                             return prediction, hidden.squeeze(1) if hidden.dim() == 3 else hidden
                 </code></pre>
@@ -993,77 +991,147 @@
 
         <li><strong>GRU(Gated Recurrent Unit) Results </strong></li>
 
-        <div style="text-align: center;">
+        <div >
             <img src="metrics_per_epoch.png" alt="Training Results" width="1200" />
             <p>Figure 1: Plot of Training Loss, BLEU, and F1 Scores over Epochs</p>
         </div>
 
 
-        <div style="text-align: center;">
+        <div >
             <p>
                 In our first test run of the GRU-based Seq2Seq model for text-to-text translation, we ran the model for about 5 epochs to evaluate its performance on the test data. During this test run, we tracked and plotted three key metrics: BLEU Score, Training Loss, and F1 Score. 
             </p>
 
             <p>
-                BLEU Score: (Bilingual Evaluation Understudy) score is a widely-used metric for evaluating the quality of machine-generated translations by comparing them to reference translations. The score ranges from 0 to 1, with higher values indicating better translation quality.<br>
-                Training Loss:  Training loss measures how well the model's predictions align with the expected outputs. A decreasing training loss generally indicates that the model is learning effectively and minimizing the error in its predictions.<br>
+                <strong>BLEU Score:</strong>(Bilingual Evaluation Understudy) score is a widely-used metric for evaluating the quality of machine-generated translations by comparing them to reference translations. The score ranges from 0 to 1, with higher values indicating better translation quality.<br>
                 
-                F1 Score: The F1 score is a measure of a model's precision and recall in classification tasks, with values closer to 1 indicating better balance between precision and recall. It is particularly useful when dealing with imbalanced datasets.
+                <strong>Training Loss:</strong>Training loss measures how well the model's predictions align with the expected outputs. A decreasing training loss generally indicates that the model is learning effectively and minimizing the error in its predictions.<br>
+                
+                <strong>F1 Score:</strong>he F1 score is a measure of a model's precision and recall in classification tasks, with values closer to 1 indicating better balance between precision and recall. It is particularly useful when dealing with imbalanced datasets.
                 <br>
         
-                In the first 4 Epochs you can notice subtle changes the the Training Loss Per Epoch decreases from 5.59 to sub 5.54.
-                <br>
-                The BLEU Score sadly was decreasing, initially started at 0.03284 ending at sub 0.03279 (A higher BLEU Score closer to 1 would be more optimal)
-                <br>
-                The F1 score showed some decreasing and increasing during the first 4 Epochs, at a max of 0.006555 and minimum of sub 0.006530.
+                The training loss gradually decreased from 5.59 to sub 5.54 over the first 4 epochs. The decreasing training loss is a positive sign, showing that the model is learning to minimize errors over time.
+                The BLEU score started at 0.03284 and decreased slightly to sub 0.03279 after 4 epochs. Ideally, the BLEU score should increase as the model learns better translation patterns. A higher BLEU score indicates better quality and closer alignment with human translations.
+                The F1 score showed fluctuations, with values ranging from 0.006530 to 0.006555 over the 4 epochs.The small changes in the F1 score suggest that the model's precision and recall are not yet well-optimized, likely due to the model's initial training phase.
             </p>
         </div>
 
         <br>
 
-        <div style="text-align: center;">
+        <div>
             <img src="metrics_per_epoch (2).png" alt="Training Results" width="1200" />
             <p>Figure 1: Plot of Training Loss, BLEU, and F1 Scores over Epochs</p>
         </div>
 
-        <div style="text-align: center;">
+        <div>
+
             <p>
-                We incraesed the amount of CPU cores from 12 to 18, got a more power GPU the NVIDIA A100 80G and increased the Memeory from 16 to 64 and trained the model for 32 Epochs.
-                We witnessed gradual change over 
+                We increased the number of CPU cores from 12 to 18, upgraded to a more powerful GPU (NVIDIA A100 80GB), and increased the memory from 16GB to 64GB. We then trained the model for 32 epochs.
+                During the first 7 epochs, we observed gradual changes. The training loss decreased from 5.5 to just below 5.54, while the BLEU score unfortunately decreased from 0.03284 to just below 0.03279. The F1 score initially increased from 0.006535 to 0.006555.
+                However, a common trend across all three metrics was that they began to level out after the next 25 epochs, with no significant changes observed in the model after that. This plateau was likely caused by errors in preprocessing when we were creating the BERT embeddings and tokenizing the sentences. Specifically, the tokenization step truncated sentences in our dataset if they were too long. The function below highlights how we handled the BERT embeddings:
+                
+                <pre><code>
+                    def dataSetBertEmbeddings(text, model, tokenizer):
+                        encoded_input = tokenizer(text, return_tensors='pt', padding=True, truncation=True, max_length=512)
+                        with torch.no_grad():
+                            output = model(**encoded_input)
+                        word_embeddings = output.last_hidden_state[:, 0, :]
+                        return word_embeddings.squeeze().numpy()
+                </code></pre>
+
+                We set max_length to 512 to avoid truncating sentences during the BERT embedding process. I had to rerun our preprocessing.py file and remake
+                our training and testing data. I was able to send the information to my tea members and have them train their Transformer and LSTM models as well.
+
+
+                Additionally, we made edits to our train.py for the final report, as shown in the following code snippet:
+
+               <pre><code>
+                train_dataset = TranslationDataset(train_data, tokenizer)
+                train_loader = DataLoader(train_dataset, batch_size=128, shuffle=True, num_workers=16, pin_memory=True)
+
+                embedding_dim = 512
+                hidden_dim = 512
+                output_dim = len(tokenizer)
+                input_dim = len(tokenizer.vocab)
+                n_layers = 2
+                dropout = 0.5
+
+                encoder = Encoder(input_dim, embedding_dim, hidden_dim, n_layers, dropout)
+                decoder = Decoder(output_dim, embedding_dim, hidden_dim, n_layers, dropout)
+
+                model = Seq2Seq(encoder, decoder, device).to(device)
+
+                criterion = nn.CrossEntropyLoss(ignore_index=tokenizer.pad_token_id)
+                optimizer = optim.Adam(model.parameters(), lr=0.001)
+                </code></pre>
+
+                We also decreased the learning rate, set appropriate embedding and hidden dimensions, and increased the batch size to help the model train faster and better understand the translations.
+                
+                We tried again an began testing the GRU Model as well.
             </p>
+
         </div>
 
-        <div style="text-align: center;">
+        <div>
             <img src="metrics_per_epoch (5).png" alt="Training Results" width="1200" />
             <p>Figure 1: Plot of Training Loss, BLEU, and F1 Scores over Epochs</p>
         </div>
 
         <p>
-
-
+            As observed, the training loss decreased over time, starting at a lower value than before and dropping from around 56.48 to just below 5.42. 
+            The BLEU score also showed a gradual increase during this run, rising from 0.0091075 to 0.0091225.
+            Similarly, the F1 score steadily improved, beginning at approximately 0.002480 and peaking at 0.002510, before slightly dipping between 0.002510 and 0.002505.
         </p>
 
         <li><strong>LSTM (Long Short-Term Memory) Results </strong></li>
-        <div style="text-align: center;">
+        <div>
             <img src="lstm_results.png" alt="Training Results" width="1200" />
             <p>Figure 1: Plot of Training Loss, BLEU, and F1 Scores over Epochs</p>
         </div>
         
         <p>
-
+            Overall, the plots indicate that the model is performing well. The training loss is decreasing, starting at 5.75 and reaching values as low as 5.35.
+            The BLEU score is increasing stating at 0.0096 and increasing to 0.0101 wherte it bounces betweeen 0.0101 and 0.0100. The F1 score is also increasing too starting at 0.0020 and growing to 0.0025 where it bounces back and forth between 0.0025 and 0.0024.
+            However, it is important to note that the BLEU and F1 scores are still relatively low. We attribute it to the complexity of the task and the size of the training dataset. Our dataset was originally 265k lines of English Sentence | Spanish Sentence Trasnlation.
 
         </p>
         
         <li><strong>Transformer Results </strong></li>
-        <div style="text-align: center;">
+        <div>
             <img src="transformers_results.png" alt="Training Results" width="1200" />
             <p>Figure 1: Plot of Training Loss, BLEU, and F1 Scores over Epochs</p>
         </div>
 
         <p>
-
-
+            The training loss starts at a relatively high value (around 5.85) and decreases rapidly in the first few epochs. This indicates that the model is learning quickly from the training data and making significant improvements.
+            The BLEU score starts at a low value (around 0.034) and increases steadily in the initial epochs. This indicates that the model's translation quality is improving as it learns from the training data.
+            The F1 score starts at a low value (around 0.005) and increases rapidly in the initial epochs. This indicates that the model's classification accuracy is improving significantly as it learns from the training data.
+            THe F1 and BLEU scores seem the pleateau once it freaches the 19 - 30 Epoch's, we hope to inot only increase the number of EPochs from 30 to 500, but also improve the model architectue and hyperparameters.
         </p>
+
+        <li><strong>Comparison </strong></li>
+        <p>
+            Training Loss: All models showed a decrease in training loss over time, indicating that they were learning effectively. However, the GRU model exhibited a slower and less consistent decrease in loss compared to the LSTM and Transformer models, highlighting the GRU's limitations in handling complex translation tasks.
+           
+            BLEU Score: The Transformer model had the highest BLEU score at the start and showed the most consistent increase early on, reflecting its ability to produce better translations. The LSTM model followed closely, showing steady improvement but with a slower rise. The GRU model, however, showed a slight decrease in BLEU score initially, suggesting that it struggled more with the translation quality than the LSTM and Transformer models.
+            
+            F1 Score: The LSTM model showed the most consistent increase in the F1 score, indicating that its precision and recall were improving steadily. The Transformer model also showed rapid improvements initially, but it plateaued quickly. The GRU model showed minimal improvements in F1 score, which suggests that its ability to balance precision and recall was not as strong. 
+        </p>
+
+
+        <li><strong>Next Steps</strong></li>
+        <p>
+            With the LSTM, I think we could definitely improve its performance by fine-tuning the hyperparameters a bit more. Right now, it's performing well, but I feel like we could get a better BLEU score and F1 score if we train it on a larger dataset. The model’s got potential, but we’re probably not seeing its full capabilities yet.
+
+            Now, for the Transformer, we’ve seen some solid results, but there’s room for improvement in terms of its architecture and training process. If we optimize the hyperparameters further and train for more epochs, I think it could surpass the LSTM and GRU in performance. But of course, that means we need more computational resources and a bit more training time. The Transformer thrives with more data, and we’re definitely not pushing it to its limits yet.
+            
+            Another thing we should focus on is data preprocessing. I noticed that tokenization and how we handle sentence length are key factors here. If we can improve that, it’ll help all three models handle longer and more complex sentences, which should improve translation quality overall.
+            
+            Speaking of training, increasing the number of epochs across all models could also help. Especially for the Transformer, it’s clear that it plateaued earlier than expected. Giving it more epochs might help it push past that plateau and reach better performance levels.
+            
+            Lastly, let’s talk about experimenting with a larger dataset. The Transformer model in particular really benefits from large, diverse datasets, so if we could gather more data, we might see a noticeable improvement in its output. Of course, this would take more resources, but I think it’d be worth it in the long run.
+        </p>
+
 
         <h2>Reference</h2>
         <ol>
@@ -1097,21 +1165,25 @@
                 <tr>
                     <td style="border: 1px solid black; padding: 8px;">Moses Adewolu</td>
                     <td style="border: 1px solid black; padding: 8px;">Implemented Preprocessing methods, data cleaning, contraction integration, BERT Embedding via HuggingFace API.
-                     Implemented GRU Model, Encoder, Decoder along with SequenceToSequence Model. Worked on Method training code along with method evaluation and results. Worked on miterm proprosal. </td>
+                     Implemented GRU Model, Encoder, Decoder along with SequenceToSequence Model. Worked on Method training code along with method evaluation and results. Worked on midterm, Proposal, Midterm Checkpoint and Final Report. </td>
+                </tr>
+                <tr>
+                    <td style="border: 1px solid black; padding: 8px;">Miguel</td>
+                    <td style="border: 1px solid black; padding: 8px;">MAJOR HELP TO PROJECT Helped work on midterm proposal presentation. Formatted Results, specifically BLEU, Loss, F1 Scores.  Implemented LSTM, Encoder, Decoder along with SequenceToSequence Model. Worked on Method training code along with method evaluation and results. Worked on midterm, Proposal, Midterm Checkpoint and Final Report.</td>
                 </tr>
                 <tr>
                     <td style="border: 1px solid black; padding: 8px;">Christian</td>
-                    <td style="border: 1px solid black; padding: 8px;">Helped find dataset, worked on preprocessing methods, dataSetContractionIntegration, dataCleaning. Helped with training the model
-                        on PACE ICE.
-                    </td>
+                    <td style="border: 1px solid black; padding: 8px;">Helped find dataset, worked on preprocessing methods, dataSetContractionIntegration, dataCleaning.  Implemented GRU Model, Encoder, Decoder along with SequenceToSequence Model. Worked on Method training code along with method evaluation and results. Helped with Midterm Checkpoint and Final Report.</td>
                 </tr>
                 <tr>
                     <td style="border: 1px solid black; padding: 8px;">Ethan</td>
-                    <td style="border: 1px solid black; padding: 8px;">Helped work on midterm proposal presentation. Formatted Results, specifically BLEU, Loss, F1 Scores.</td>
+                    <td style="border: 1px solid black; padding: 8px;">Helped work on midterm proposal presentation. Formatted Results, specifically BLEU, Loss, F1 Scores.  Implemented LSTM, Encoder, Decoder along with SequenceToSequence Model. Worked on Method training code along with method evaluation and results. Worked on midterm, Proposal, Midterm Checkpoint and Final Report.</td>
                 </tr>
                 <tr>
                     <td style="border: 1px solid black; padding: 8px;">Arun</td>
-                    <td style="border: 1px solid black; padding: 8px;">Helped work on midterm proposal presentation. Formatted Results, specifically BLEU, Loss, F1 Scores.</td>
+                    <td style="border: 1px solid black; padding: 8px;">Helped work on midterm proposal presentation. Formatted Results, specifically BLEU, Loss, F1 Scores.
+                    Implemented Transformer Based Model, Encoder, Decoder along with SequenceToSequence Model. Worked on Method training code along with method evaluation and results. Worked on midterm, Proposal, Midterm Checkpoint and Final Report and Recorded Video.
+                    </td>
                 </tr>
                 <!-- Add more rows as necessary -->
             </tbody>
