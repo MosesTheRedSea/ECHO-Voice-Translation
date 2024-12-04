@@ -7,9 +7,9 @@
 This **Text->Text Translation System** is designed to provide accurate and efficient real-time translations of spoken language. By leveraging machine learning, this system can process audio inputs and return translations in multiple languages, catering to a diverse global audience.
 
 The project includes:
-- **Preprocessing of audio data**.
-- **Training machine learning models** for language translation.
-- **Evaluation of model performance** and real-time implementation.
+- **Preprocessing of Text Translation data**.
+- **Training machine learning models**
+- **Evaluation of model performance** 
 
 [Voice Translation System](https://mosestheredsea.github.io/ECHO-Voice-Translation/)
 
