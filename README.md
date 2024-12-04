@@ -13,10 +13,6 @@ The project includes:
 
 [Voice Translation System](https://mosestheredsea.github.io/ECHO-Voice-Translation/)
 
-# Project Name
-
-This repository contains the code and resources for the English-to-Spanish translation project. The repository includes directories for data, models, scripts for preprocessing and training, and necessary requirements to run the project.
-
 ## Directory Structure
 
 ### /data/raw/English
