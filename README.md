@@ -4,7 +4,7 @@
 [mattcolewilson](https://dribbble.com/mattcolewilson)
 
 ## Project Overview
-The **Voice Translation System** is designed to provide accurate and efficient real-time translations of spoken language. By leveraging machine learning, this system can process audio inputs and return translations in multiple languages, catering to a diverse global audience.
+This **Text->Text Translation System** is designed to provide accurate and efficient real-time translations of spoken language. By leveraging machine learning, this system can process audio inputs and return translations in multiple languages, catering to a diverse global audience.
 
 The project includes:
 - **Preprocessing of audio data**.
