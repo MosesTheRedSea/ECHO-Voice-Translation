@@ -12,7 +12,7 @@
             background-color: #f4f4f4;
         }
         header {
-            background: linear-gradient(to right, #86c240, #ffcb0a);
+            background: black;
             color: #ffffff;
             padding: 10px 0;
             text-align: center;
@@ -524,6 +524,614 @@
         <p>
             This section will include your final report, summarizing the work completed, results obtained, and conclusions drawn from the project.
         </p>
+
+
+        <h2>Introduction/Background</h2>
+        <ul>
+            <p>
+               The Voice Translation System aims to bridge communication gaps by providing accurate translations of spoken language. In today’s interconnected world, voice translation systems have become essential tools for effective communication across diverse languages. Innovations from tech giants like Google with Google Translate and Meta's new Ray-Ban smart glasses highlight the growing importance of voice translation technology, making it more accessible and practical in everyday situations.</li>
+            </p>
+
+            <p>
+                 At the core of many modern voice translation systems is the application of advanced machine learning techniques, notably Long Short-Term Memory (LSTM) networks. Originally, Google Translate relied heavily on LSTMs as part of its neural machine translation (NMT) framework, specifically through the Google Neural Machine Translation (GNMT) model introduced in 2016 [2].</li>
+            </p>
+
+            <p>
+                Text-to-text translation was made possible by the development of the Transformer architecture. The Transformer model eliminated the need for RNNs and instead relied solely on self-attention mechanisms and positional encoding to capture relationships between words in a sequence.</li>
+            </p>
+
+            <p>
+                The <a href="https://tatoeba.org/en/downloads">Tatoeba English-Spanish Dataset</a> contains over 265,817 sentence pairs, supporting multilingual NLP tasks, including machine translation, and facilitating linguistic research and model training. The English-Spanish Dataset consists of pairs of sentences in English (source language) and their corresponding translations in Spanish (target language), providing a level of linguistic variety and flexibility.</li>
+            </p>
+
+        </ul>
+        
+
+        <h2>Problem Definition</h2>
+        <ul>
+            <p>
+                The problem we’re aiming to improve is the need for more accurate and efficient voice translations for individuals traveling or engaging in communication with people who speak different languages.</li>
+            </p>
+        </ul>
+
+        <h2>Methods</h2>
+        <p><strong>Data PreProcessing Methods </strong></p>
+        <ul>
+            <p>
+                The preprocessing of the dataset is performed using various techniques:
+            </p>
+            <ul>
+                <li><strong>Lowercasing:</strong> All text is converted to lowercase to maintain consistency.</li>
+                <li><strong>Punctuation Removal:</strong> Both English and Spanish sentences have their punctuation removed to make translation easier.</li>
+                <li><strong>Removing Duplicates:</strong> Duplicate sentence pairs are dropped to avoid redundancy in the training data.</li>
+                <li><strong>Handling Contractions:</strong> A contraction dictionary is applied to expand contractions in the English text, improving model accuracy by reducing variation in language forms.</li>
+            </ul>
+        
+            <ul>
+                <li><strong>dataSetCleaning(df):</strong> This function performs lowercasing, punctuation removal, and duplicate elimination.
+                    <pre><code class="language-python">
+            def dataSetCleaning(df):
+                # Lowercasing all sentences
+                df['English'] = df['English'].str.lower()
+                df['Spanish'] = df['Spanish'].str.lower().fillna('')
+            
+                # Removing Punctuation From Both Data set's so that translation will be easier
+                df['English'] = df['English'].str.translate(str.maketrans('', '', string.punctuation))
+                df['Spanish'] = df['Spanish'].str.translate(str.maketrans('', '', string.punctuation))
+            
+                # Eliminating duplicate sentence pairs
+                df.drop_duplicates(subset=['English', 'Spanish'])
+            
+                #  Remove rows with missing translations.
+                df[df['Spanish'] != '']
+                return df
+                    </code></pre>
+                </li>
+    
+                <p> In order to fully expand the contraction we had a python file which held a dictionary of the major contractions and their expanded form in english</p>
+               
+                <pre><code>
+                    CONTRACTIONS = {
+                        "i'm": "I am",
+                        "you're": "you are",
+                        "he's": "he is",
+                        "she's": "she is",
+                        "it's": "it is",
+                        "we're": "we are",
+                        "they're": "they are",
+                        "i've": "I have",
+                        "you've": "you have",
+                        "we've": "we have",
+                        "they've": "they have",
+                        "i'd": "I would",
+                        "you'd": "you would",
+                        "he'd": "he would",
+                        "she'd": "she would",
+                        "we'd": "we would",
+                        "they'd": "they would",
+                        "i'll": "I will",
+                        "you'll": "you will",
+                </code></pre>
+    
+                <li><strong>dataSetContractionIntegration(df):</strong> Expands contractions in the English sentences using a predefined contraction dictionary.
+                    <pre><code class="language-python">
+            def dataSetContractionIntegration(df):
+                new_data = []
+                for _, row in df.iterrows():
+                    words = row["English"].split()
+                    expanded_words = [CONTRACTIONS[word.lower()] if word.lower() in CONTRACTIONS else word for word in words]
+                    expanded_sentence = ' '.join(expanded_words)
+                    english_sentence = {
+                        "English": expanded_sentence,
+                        "Spanish": row["Spanish"]
+                    }
+                    new_data.append(english_sentence)
+                dataFrame = pd.DataFrame(new_data)
+                return pd.concat([df, dataFrame]).drop_duplicates().reset_index(drop=True)
+                    </code></pre>
+                </li>
+            
+                <li><strong>dataSetBertEmbeddings(text, model, tokenizer):</strong> Utilizes the BERT tokenizer and model from Hugging Face to obtain word embeddings for tokenized text.</li>
+    
+                <pre><code>
+                    def dataSetBertEmbeddings(text, model, tokenizer):
+                        encoded_input = tokenizer(text, return_tensors='pt', padding=True, truncation=True)
+                        with torch.no_grad():
+                            output = model(**encoded_input)
+                        word_embeddings = output.last_hidden_state[:, 0, :]
+                        return word_embeddings.squeeze().numpy()  
+    
+                </code></pre>
+    
+                <p> In order to get the BERT Embeedings for the English & Spanish Sentences we used a transformer model through the Huggingface API</p>
+    
+                <pre><code>
+                    english_tokenizer = BertTokenizer.from_pretrained("bert-base-uncased")
+                    english_model = BertModel.from_pretrained("bert-base-uncased")
+    
+                    # We Found BETO : A Spanish BERT (Tokenization)
+                    # https://huggingface.co/dccuchile/bert-base-spanish-wwm-uncased
+                    spanish_tokenizer = BertTokenizer.from_pretrained("dccuchile/bert-base-spanish-wwm-cased")
+                    spanish_model = BertModel.from_pretrained("dccuchile/bert-base-spanish-wwm-cased")
+    
+                    # Get BERT embeddings for English
+                    df['English BERT'] = df['English'].apply(lambda x: dataSetBertEmbeddings(x, english_model, english_tokenizer))
+    
+                    # Get BERT embeddings for Spanish
+                    df['Spanish BERT'] = df['Spanish'].apply(lambda x: dataSetBertEmbeddings(x, spanish_model, spanish_tokenizer))
+    
+                </code></pre>
+        </ul>
+
+        <p><strong>Algorithms/Models</strong></p>
+
+        <p>
+            For our text-to-text translation system, we have developed and implemented three specific models—GRU, LSTM, and Transformer—each with its unique architecture to ensure a diverse and robust approach to translation. These models offer different strengths and capabilities to optimize the translation process. 
+        </p>
+    
+        <h4>GRU (Gated Recurrent Unit) Based Seq2Seq Model</h4>
+            <p>
+                We chose the GRU (Gated Recurrent Unit) model for its simplicity and efficiency in handling sequential data, which is crucial for text-to-text translation tasks. Unlike more complex models, such as LSTMs, GRUs have fewer parameters and are computationally less intensive while still providing strong performance in learning dependencies within sequences. This makes the GRU a suitable choice for scenarios where computational resources are limited or faster processing is required without sacrificing translation quality.
+            </p>
+            <ul>
+                <li><strong>Encoder:</strong> Encodes the input (English) sentence into a context vector.</li>
+                <pre><code>
+                    class Encoder(nn.Module):
+                        def __init__(self, input_dim, embedding_dim, hidden_dim, n_layers, dropout):
+                            super(Encoder, self).__init__()
+                            self.embedding = nn.Embedding(input_dim, embedding_dim)  # Using embedding_dim
+                            self.gru = nn.GRU(embedding_dim, hidden_dim, n_layers, dropout=dropout)
+                            self.dropout = nn.Dropout(dropout)
+
+                        def forward(self, input):
+                            embedded = self.embedding(input)
+                            embedded = self.dropout(embedded)
+                            outputs, hidden = self.gru(embedded)
+                            return outputs, hidden
+                </code></pre>
+                <li><strong>Decoder:</strong> Decodes the context vector into the output (Spanish) sentence.</li>
+                <pre><code>
+                    class Decoder(nn.Module):
+                        def __init__(self, output_dim, embedding_dim, hidden_dim, n_layers, dropout):
+                            super(Decoder, self).__init__()
+                            self.embedding = nn.Embedding(output_dim, embedding_dim)
+                            self.gru = nn.GRU(embedding_dim, hidden_dim, n_layers, dropout=dropout)
+                            self.fc_out = nn.Linear(hidden_dim, output_dim)
+                            self.dropout = nn.Dropout(dropout)
+
+                        def forward(self, input, hidden):
+                            # Convert input token indices to embeddings
+                            embedded = self.embedding(input).unsqueeze(0)  # (1, batch_size, embedding_dim)
+                            embedded = self.dropout(embedded)
+
+                            # Adjust hidden dimensions for single-batch case
+                            if hidden.dim() == 3 and hidden.size(1) == 1:
+                                hidden = hidden.squeeze(1)  # Squeeze batch dimension for unbatched case
+
+                            # Pass through GRU
+                            output, hidden = self.gru(embedded, hidden.unsqueeze(1) if hidden.dim() == 2 else hidden)
+
+                            # Generate predictions
+                            prediction = self.fc_out(output.squeeze(0))
+                            return prediction, hidden.squeeze(1) if hidden.dim() == 3 else hidden
+                </code></pre>
+                <li><strong>Seq2Seq Model:</strong> This model ties together the encoder and decoder, making it a complete sequence-to-sequence framework for translation.</li>
+
+                <pre><code>
+                    class Seq2Seq(nn.Module):
+                        def __init__(self, encoder, decoder, device):
+                            super().__init__()
+                            self.encoder = encoder
+                            self.decoder = decoder
+                            self.device = device
+
+                        def forward(self, src, trg, teacher_forcing_ratio=0.5):
+                            batch_size = src.shape[1]
+                            trg_len = trg.shape[0]
+                            trg_vocab_size = self.decoder.fc_out.out_features
+
+                            outputs = torch.zeros(trg_len, batch_size, trg_vocab_size).to(self.device)
+                            _, hidden = self.encoder(src)  # Ensure only hidden is passed
+
+                            input = trg[0, :]  # First target token
+                            for t in range(1, trg_len):
+                                output, hidden = self.decoder(input, hidden)
+                                outputs[t] = output
+
+                                top1 = output.argmax(1)
+                                input = trg[t] if torch.rand(1).item() < teacher_forcing_ratio else top1
+
+                            return outputs
+                </code></pre>
+        </ul>
+
+        <h4>LSTM (Long Short-Term Memory) Based Seq2Seq Model</h4>
+        <p>
+            We chose the LSTM (Long Short-Term Memory) model for its ability to capture long-range dependencies in sequences, which is essential for accurate text-to-text translation. LSTMs are specifically designed to overcome the vanishing gradient problem that can occur in traditional RNNs (Recurrent Neural Networks), enabling them to remember information over longer periods of time. This makes LSTMs particularly effective for translation tasks, where context and meaning depend on words that appear far apart in a sentence.
+        </p>
+        <ul>
+            <li><strong>Encoder:</strong> Encodes the input (English) sentence into a context vector.</li>
+            <pre><code>
+                # Encoder (LSTM-based)
+                class Encoder(nn.Module):
+                    def __init__(self, input_dim, embedding_dim, hidden_dim, n_layers, dropout):
+                        super(Encoder, self).__init__()
+                        self.embedding = nn.Embedding(input_dim, embedding_dim)  # Using embedding_dim
+                        self.lstm = nn.LSTM(embedding_dim, hidden_dim, n_layers, dropout=dropout)
+                        self.dropout = nn.Dropout(dropout)
+
+                    def forward(self, input):
+                        embedded = self.embedding(input)
+                        embedded = self.dropout(embedded)
+                        
+                        outputs, (hidden, cell)  = self.lstm(embedded)
+                        return outputs, (hidden, cell)
+            </code></pre>
+            <li><strong>Decoder:</strong> Decodes the context vector into the output (Spanish) sentence.</li>
+            <pre><code>
+                # Decoder (LSTM-based)
+                class Decoder(nn.Module):
+                    def __init__(self, output_dim, embedding_dim, hidden_dim, n_layers, dropout):
+                        super(Decoder, self).__init__()
+                        self.embedding = nn.Embedding(output_dim, embedding_dim)
+                        self.lstm = nn.LSTM(embedding_dim, hidden_dim, n_layers, dropout=dropout)
+                        self.fc_out = nn.Linear(hidden_dim, output_dim)
+                        self.dropout = nn.Dropout(dropout)
+                
+                    def forward(self, input, hidden, cell):
+                        # Convert input token indices to embeddings
+                        embedded = self.embedding(input).unsqueeze(0)  # (1, batch_size, embedding_dim)
+                        embedded = self.dropout(embedded)
+                        output, (hidden, cell) = self.lstm(embedded, (hidden, cell))
+                        prediction = self.fc_out(output.squeeze(0))
+                        return prediction, (hidden, cell)
+            </code></pre>
+            <li><strong>Seq2Seq Model:</strong> This model ties together the encoder and decoder, making it a complete sequence-to-sequence framework for translation.</li>
+            <pre><code>
+                # Seq2Seq Model (Encoder + Decoder)
+                class Seq2Seq(nn.Module):
+                    def __init__(self, encoder, decoder, device):
+                        super().__init__()
+                        self.encoder = encoder
+                        self.decoder = decoder
+                        self.device = device
+                
+                    def forward(self, src, trg, teacher_forcing_ratio=0.5):
+                        batch_size = src.shape[1]
+                        trg_len = trg.shape[0]
+                        trg_vocab_size = self.decoder.fc_out.out_features
+                
+                        outputs = torch.zeros(trg_len, batch_size, trg_vocab_size).to(self.device)
+                        _, (hidden, cell) = self.encoder(src)  # Ensure only hidden is passed
+                
+                        input = trg[0, :]  # First target token
+                        for t in range(1, trg_len):
+                            output, (hidden, cell) = self.decoder(input, hidden, cell)
+                            outputs[t] = output
+                            top1 = output.argmax(1)
+                            input = trg[t] if torch.rand(1).item() < teacher_forcing_ratio else top1
+                
+                        return outputs
+            </code></pre>
+    </ul>
+
+
+        <h4>Transformer Model</h4>
+        <p>
+            We chose the Transformer model for its cutting-edge performance and efficiency in handling complex translation tasks. Unlike traditional RNN-based models, such as GRU and LSTM, the Transformer leverages self-attention mechanisms, which allow it to process entire sentences in parallel rather than sequentially. This significantly reduces training time and enables the model to capture intricate relationships between words regardless of their position in the sentence. The Transformer's ability to focus on relevant parts of the input sequence—through attention scores—allows for better contextual understanding, making it particularly powerful for machine translation tasks.
+        </p>
+        <li><strong>Encoder:</strong> Encodes the input (English) sentence into a context vector.</li>
+            <pre><code>
+            # Encoder (Transformer-based)
+            class Encoder(nn.Module):
+                def __init__(self, input_dim, embedding_dim, hidden_dim, n_layers, dropout, max_len=512):
+                    super(Encoder, self).__init__()
+                    self.embedding = nn.Embedding(input_dim, embedding_dim)
+                    self.pos_encoder = nn.Parameter(torch.zeros(1, max_len, embedding_dim))
+                    self.encoder_layer = nn.TransformerEncoderLayer(d_model=embedding_dim, nhead=n_layers, dim_feedforward=hidden_dim, dropout=dropout)
+                    self.transformer_encoder = nn.TransformerEncoder(self.encoder_layer, num_layers=n_layers)
+                    self.embedding_dim = embedding_dim
+
+                def forward(self, src):
+                    src = self.embedding(src) * torch.sqrt(torch.tensor(self.embedding_dim, dtype=torch.float32, device=src.device))
+                    src = src + self.pos_encoder[:, :src.size(1)]
+                    return self.transformer_encoder(src)
+            </code></pre>
+            <li><strong>Decoder:</strong> Decodes the context vector into the output (Spanish) sentence.</li>
+            <pre><code>
+            # Decoder (Transformer-based)
+            class Decoder(nn.Module):
+                def __init__(self, output_dim, embedding_dim, hidden_dim, n_layers, dropout, max_len=512):
+                    super(Decoder, self).__init__()
+                    self.embedding = nn.Embedding(output_dim, embedding_dim)
+                    self.pos_encoder = nn.Parameter(torch.zeros(1, max_len, embedding_dim))
+                    self.decoder_layer = nn.TransformerDecoderLayer(d_model=embedding_dim, nhead=n_layers, dim_feedforward=hidden_dim, dropout=dropout)
+                    self.transformer_decoder = nn.TransformerDecoder(self.decoder_layer, num_layers=n_layers)
+                    self.fc_out = nn.Linear(embedding_dim, output_dim)
+                    self.embedding_dim = embedding_dim
+
+                def forward(self, tgt, memory):
+                    tgt = self.embedding(tgt) * torch.sqrt(torch.tensor(self.embedding_dim, dtype=torch.float32, device=tgt.device))
+                    tgt = tgt + self.pos_encoder[:, :tgt.size(1)]
+                    tgt_mask = torch.triu(torch.ones(tgt.size(0), tgt.size(0), device=tgt.device), diagonal=1).bool()
+                    output = self.transformer_decoder(tgt, memory, tgt_mask)
+                    return self.fc_out(output)
+            </code></pre>
+            <li><strong>Seq2Seq Model:</strong> This model ties together the encoder and decoder, making it a complete sequence-to-sequence framework for translation.</li>
+            <pre><code>
+                # Seq2Seq Model (Encoder + Decoder)
+                class Seq2Seq(nn.Module):
+                    def __init__(self, encoder, decoder, device):
+                        super(Seq2Seq, self).__init__()
+                        self.encoder = encoder
+                        self.decoder = decoder
+                        self.device = device
+
+                    def forward(self, src, trg, teacher_forcing_ratio=0.5):
+                        src = src.to(self.device)
+                        trg = trg.to(self.device)
+                        memory = self.encoder(src)
+                        trg_len = trg.size(0)
+                        batch_size = trg.size(1)
+                        trg_vocab_size = self.decoder.fc_out.out_features
+                        outputs = torch.zeros(trg_len, batch_size, trg_vocab_size, device=self.device)
+
+                        input = trg[0, :] # First target token
+                        for t in range(1, trg_len):
+                            output = self.decoder(input.unsqueeze(0), memory)
+                            outputs[t] = output.squeeze(0)
+
+                            top1 = output.argmax(2).squeeze(0)
+                            input = trg[t] if torch.rand(1).item() < teacher_forcing_ratio else top1
+
+                        return outputs
+            </code></pre>
+
+        <h2>Results and Discussion</h2>
+        <p>
+            Before we dive into our results we want to show you our train loop, how we accessed data and calculated the socres we plotted
+        </p>
+
+        <h4>Implementation Details:</h4>
+        <ul>
+            <li>The TranslationDataset class prepares the dataset, including tokenizing sentences and converting them into tensors for model training.</li>
+            <pre><code>
+            # Dataset preparation (assuming you have a DataFrame with the required data)
+            class TranslationDataset(Dataset):
+                def __init__(self, data_frame, tokenizer, max_len=512):
+                    self.data_frame = data_frame
+                    self.tokenizer = tokenizer
+                    self.max_len = max_len
+
+                def __len__(self):
+                    return len(self.data_frame)
+
+                def __getitem__(self, idx):
+                    english_text = str(self.data_frame.iloc[idx, 0])
+                    spanish_text = str(self.data_frame.iloc[idx, 2])
+                    eng_input = self.tokenizer.encode(english_text, max_length=self.max_len, truncation=True, padding='max_length')
+                    spa_target = self.tokenizer.encode(spanish_text, max_length=self.max_len, truncation=True, padding='max_length')
+                    eng_tensor = torch.tensor(eng_input, dtype=torch.long)
+                    spa_tensor = torch.tensor(spa_target, dtype=torch.long)
+                    return eng_tensor, spa_tensor
+            </code></pre>
+
+
+            <li>The model uses Cross-Entropy Loss for optimization, suitable for classification tasks such as predicting each token in the target sequence.</li>
+            <pre><code>
+                # Training Loop
+                epochs = 500 # Attempted to Run 500 Epochs Limited To Current Hardware
+                for epoch in range(start_epoch, epochs):
+                    print("Start EPOCH")
+                    model.train()
+                    total_loss = 0
+                    epoch_bleu = 0
+                    epoch_f1 = 0
+                
+                    for batch_idx, (eng_input, spa_target) in enumerate(train_loader):
+                        eng_input = eng_input.to(device)
+                        spa_target = spa_target.to(device)
+                
+                        optimizer.zero_grad()
+                        output = model(eng_input, spa_target)
+                        output = output.view(-1, output_dim)
+                        spa_target = spa_target.view(-1)
+                        loss = criterion(output, spa_target)
+                        loss.backward()
+                
+                        torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
+                        optimizer.step()
+                        total_loss += loss.item()
+                
+                        with torch.no_grad():
+                            hypothesis = output.argmax(dim=1).cpu().numpy()
+                            reference = spa_target.cpu().numpy()
+                            bleu = calculate_bleu(reference, hypothesis)
+                            f1 = calculate_f1(reference, hypothesis)
+                            epoch_bleu += bleu
+                            epoch_f1 += f1
+                
+                
+                    print("EPOCH FINISHED")
+                
+                    avg_loss = total_loss / len(train_loader)
+                    avg_bleu = epoch_bleu / len(train_loader)
+                    avg_f1 = epoch_f1 / len(train_loader)
+                
+                    train_losses.append(avg_loss)  # Append the average loss
+                    bleu_scores.append(avg_bleu)  # Append the average BLEU score
+                    f1_scores.append(avg_f1) 
+                
+                    print(f'Epoch [{epoch+1}/{epochs}], Loss: {avg_loss:.4f}, BLEU: {avg_bleu:.4f}, F1 Score: {avg_f1:.4f}')
+                
+                    save_checkpoint(epoch, model, optimizer, train_losses, bleu_scores, f1_scores)
+            </code></pre>
+
+
+            <li>BLEU and F1 scores are computed during training as evaluation metrics for translation quality.</li>
+            <pre><code>
+                with torch.no_grad():
+                    hypothesis = output.argmax(dim=1).cpu().numpy()
+                    reference = spa_target.cpu().numpy()
+                    bleu = calculate_bleu(reference, hypothesis)
+                    f1 = calculate_f1(reference, hypothesis)
+                    epoch_bleu += bleu
+                    epoch_f1 += f1
+                
+                
+                print("EPOCH FINISHED")
+            
+                avg_loss = total_loss / len(train_loader)
+                avg_bleu = epoch_bleu / len(train_loader)
+                avg_f1 = epoch_f1 / len(train_loader)
+            
+                train_losses.append(avg_loss)  # Append the average loss
+                bleu_scores.append(avg_bleu)  # Append the average BLEU score
+                f1_scores.append(avg_f1) 
+            </code></pre>
+        </ul>
+
+        <li><strong>GRU(Gated Recurrent Unit) Results </strong></li>
+
+        <div style="text-align: center;">
+            <img src="metrics_per_epoch.png" alt="Training Results" width="1200" />
+            <p>Figure 1: Plot of Training Loss, BLEU, and F1 Scores over Epochs</p>
+        </div>
+
+
+        <div style="text-align: center;">
+            <p>
+                In our first test run of the GRU-based Seq2Seq model for text-to-text translation, we ran the model for about 5 epochs to evaluate its performance on the test data. During this test run, we tracked and plotted three key metrics: BLEU Score, Training Loss, and F1 Score. 
+            </p>
+
+            <p>
+                BLEU Score: (Bilingual Evaluation Understudy) score is a widely-used metric for evaluating the quality of machine-generated translations by comparing them to reference translations. The score ranges from 0 to 1, with higher values indicating better translation quality.<br>
+                Training Loss:  Training loss measures how well the model's predictions align with the expected outputs. A decreasing training loss generally indicates that the model is learning effectively and minimizing the error in its predictions.<br>
+                
+                F1 Score: The F1 score is a measure of a model's precision and recall in classification tasks, with values closer to 1 indicating better balance between precision and recall. It is particularly useful when dealing with imbalanced datasets.
+                <br>
+        
+                In the first 4 Epochs you can notice subtle changes the the Training Loss Per Epoch decreases from 5.59 to sub 5.54.
+                <br>
+                The BLEU Score sadly was decreasing, initially started at 0.03284 ending at sub 0.03279 (A higher BLEU Score closer to 1 would be more optimal)
+                <br>
+                The F1 score showed some decreasing and increasing during the first 4 Epochs, at a max of 0.006555 and minimum of sub 0.006530.
+            </p>
+        </div>
+
+        <br>
+
+        <div style="text-align: center;">
+            <img src="metrics_per_epoch (2).png" alt="Training Results" width="1200" />
+            <p>Figure 1: Plot of Training Loss, BLEU, and F1 Scores over Epochs</p>
+        </div>
+
+        <div style="text-align: center;">
+            <p>
+                We incraesed the amount of CPU cores from 12 to 18, got a more power GPU the NVIDIA A100 80G and increased the Memeory from 16 to 64 and trained the model for 32 Epochs.
+                We witnessed gradual change over 
+            </p>
+        </div>
+
+        <div style="text-align: center;">
+            <img src="metrics_per_epoch (5).png" alt="Training Results" width="1200" />
+            <p>Figure 1: Plot of Training Loss, BLEU, and F1 Scores over Epochs</p>
+        </div>
+
+        <p>
+
+
+        </p>
+
+        <li><strong>LSTM (Long Short-Term Memory) Results </strong></li>
+        <div style="text-align: center;">
+            <img src="lstm_results.png" alt="Training Results" width="1200" />
+            <p>Figure 1: Plot of Training Loss, BLEU, and F1 Scores over Epochs</p>
+        </div>
+        
+        <p>
+
+
+        </p>
+        
+        <li><strong>Transformer Results </strong></li>
+        <div style="text-align: center;">
+            <img src="transformers_results.png" alt="Training Results" width="1200" />
+            <p>Figure 1: Plot of Training Loss, BLEU, and F1 Scores over Epochs</p>
+        </div>
+
+        <p>
+
+
+        </p>
+
+        <h2>Reference</h2>
+        <ol>
+            <li>
+                M. H. A. R. Al-Azzeh and H. A. A. Al-Ramahi, "Voice Translation System: A Review," <em>International Journal of Advanced Computer Science and Applications</em>, vol. 10, no. 1, pp. 265-272, 2019. DOI: 10.14569/IJACSA.2019.0100133. <a href="#">Link</a>.
+            </li>
+            <li>
+                Wu, Y., et al. "Google’s Neural Machine Translation System: Bridging the Gap between Human and Machine Translation." Google Research, 2016. <a href="#">Link</a>.
+            </li>
+            <li>
+                M. G. Zeyer, J. G. von Neumann, and A. J. Spang, "Evaluating the Effectiveness of Voice Translation Systems for Communication in International Business," <em>Journal of Language and Business</em>, vol. 9, no. 2, pp. 1-15, 2020. <a href="#">Link</a>.
+            </li>
+            <li>
+                Bahdanau, D., Cho, K., and Bengio, Y. "Neural Machine Translation by Jointly Learning to Align and Translate." ICLR, 2015. <a href="#">Link</a>.
+            </li>
+            <li>
+                "Model Behind Google Translate: Seq2seq in Machine Learning." Analytics Vidhya, Feb. 2023. <a href="#">Link</a>.
+            </li>
+        </ol>
+
+        <h2>Contribution Table</h2>
+
+        <table style="width: 100%; border-collapse: collapse;">
+            <thead>
+                <tr>
+                    <th style="border: 1px solid black; padding: 8px; text-align: left;">Team Member</th>
+                    <th style="border: 1px solid black; padding: 8px; text-align: left;">Midterm Contributions</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td style="border: 1px solid black; padding: 8px;">Moses Adewolu</td>
+                    <td style="border: 1px solid black; padding: 8px;">Implemented Preprocessing methods, data cleaning, contraction integration, BERT Embedding via HuggingFace API.
+                     Implemented GRU Model, Encoder, Decoder along with SequenceToSequence Model. Worked on Method training code along with method evaluation and results. Worked on miterm proprosal. </td>
+                </tr>
+                <tr>
+                    <td style="border: 1px solid black; padding: 8px;">Christian</td>
+                    <td style="border: 1px solid black; padding: 8px;">Helped find dataset, worked on preprocessing methods, dataSetContractionIntegration, dataCleaning. Helped with training the model
+                        on PACE ICE.
+                    </td>
+                </tr>
+                <tr>
+                    <td style="border: 1px solid black; padding: 8px;">Ethan</td>
+                    <td style="border: 1px solid black; padding: 8px;">Helped work on midterm proposal presentation. Formatted Results, specifically BLEU, Loss, F1 Scores.</td>
+                </tr>
+                <tr>
+                    <td style="border: 1px solid black; padding: 8px;">Arun</td>
+                    <td style="border: 1px solid black; padding: 8px;">Helped work on midterm proposal presentation. Formatted Results, specifically BLEU, Loss, F1 Scores.</td>
+                </tr>
+                <!-- Add more rows as necessary -->
+            </tbody>
+        </table>
+
+        <h2>Gantt Chart</h2>
+        <ul>
+            <li>
+                <iframe src="https://docs.google.com/spreadsheets/d/e/2PACX-1vQ859xpT-fweSU_K_c8evd4WJc1w4r-YjaK_QBihn6EFeHcOKbhbD3Qm7nHtzihMFuYEx0O0iS-vfqk/pubhtml?gid=610421560&amp;single=true&amp;widget=true&amp;headers=false" 
+                        width="100%" height="400" frameborder="0" allowfullscreen></iframe>
+            </li>
+        </ul>
+        
+        <h2>Video Presentation</h2>
+
+
+
+
+
+
     </section>
 
     <footer>
@@ -537,11 +1145,9 @@
             for (var i = 0; i < contents.length; i++) {
                 contents[i].style.display = 'none'; // Hide all sections
             }
-
             // Show the selected content section
             document.getElementById(sectionId).style.display = 'block'; // Show the selected section
         }
-
         // Show the overview section by default when the page loads
         document.addEventListener('DOMContentLoaded', function() {
             showContent('overview'); // You can change 'overview' to 'proposal' to show it initially
